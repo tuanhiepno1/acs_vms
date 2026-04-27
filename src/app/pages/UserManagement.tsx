@@ -32,7 +32,7 @@ const fmt = (iso?: string) => {
   }).format(new Date(iso));
 };
 
-const emptyForm = { name: '', employeeNo: '', branch: '', image: '' };
+const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended' };
 
 export function UserManagement() {
   const [list, setList] = useState<Employee[]>(staticEmployees);
@@ -62,7 +62,7 @@ export function UserManagement() {
   };
 
   const openAdd = () => { setForm(emptyForm); setIsAddOpen(true); };
-  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '' }); setEditTarget(e); };
+  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity }); setEditTarget(e); };
 
   const handleAdd = () => {
     if (!form.name || !form.employeeNo) return;
@@ -72,7 +72,7 @@ export function UserManagement() {
       employeeNo: form.employeeNo,
       branch: form.branch || staticBranches[0]?.name || '',
       image: form.image || undefined,
-      validity: 'valid',
+      validity: form.validity,
       registeredAt: new Date().toISOString(),
     };
     setList((prev) => [emp, ...prev]);
@@ -83,7 +83,7 @@ export function UserManagement() {
   const handleEdit = () => {
     if (!editTarget || !form.name) return;
     setList((prev) => prev.map((e) =>
-      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.image || e.image } : e
+      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.image || e.image, validity: form.validity } : e
     ));
     setEditTarget(null);
     setForm(emptyForm);
@@ -135,6 +135,17 @@ export function UserManagement() {
             {staticBranches.map((b) => (
               <SelectItem key={b.id} value={b.name} className="text-white">{b.name}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid gap-2">
+        <Label className="text-slate-200">Validity</Label>
+        <Select value={form.validity} onValueChange={(v) => setForm({ ...form, validity: v as 'valid' | 'expired' | 'suspended' })}>
+          <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select validity" /></SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectItem value="valid" className="text-white">Valid</SelectItem>
+            <SelectItem value="expired" className="text-white">Expired</SelectItem>
+            <SelectItem value="suspended" className="text-white">Suspended</SelectItem>
           </SelectContent>
         </Select>
       </div>
