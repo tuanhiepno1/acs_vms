@@ -53,7 +53,7 @@ const modules: ModuleDef[] = [
     id: 'acs',
     name: 'Access Control System',
     description:
-      'Face recognition access management, door control, user management, and detailed reporting.',
+      'Face recognition access management, door control, user management, and reporting.',
     icon: ShieldCheck,
     href: '/acs',
     iconBg: 'bg-blue-600/15',
@@ -194,7 +194,7 @@ export default function ModuleHub() {
                   onClick={() => licensed && navigate(mod.href)}
                   disabled={!licensed}
                   className={cn(
-                    'group relative rounded-2xl border bg-slate-900 p-6 text-left transition-all',
+                    'group relative rounded-2xl border bg-slate-900 p-6 text-center transition-all',
                     licensed
                       ? `${mod.borderColor} ${mod.hoverBorder} hover:shadow-lg ${mod.shadow} cursor-pointer`
                       : 'border-slate-800 opacity-50 cursor-not-allowed',
@@ -209,7 +209,7 @@ export default function ModuleHub() {
 
                   <div
                     className={cn(
-                      'flex size-12 items-center justify-center rounded-xl',
+                      'mx-auto flex size-12 items-center justify-center rounded-xl',
                       mod.iconBg,
                     )}
                   >
@@ -222,7 +222,7 @@ export default function ModuleHub() {
                   {licensed && (
                     <div
                       className={cn(
-                        'mt-5 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r px-4 py-2 text-sm font-medium text-white',
+                        'mx-auto mt-5 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r px-4 py-2 text-sm font-medium text-white',
                         mod.gradient,
                       )}
                     >
