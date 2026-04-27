@@ -266,11 +266,11 @@ export default function ModuleHub() {
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow className="border-slate-800 bg-slate-800/40 hover:bg-slate-800/40">
-                          <TableHead className="text-slate-300 font-semibold">User</TableHead>
-                          <TableHead className="text-slate-300 font-semibold">Role</TableHead>
+                          <TableHead className="text-center text-slate-300 font-semibold">User</TableHead>
+                          <TableHead className="text-center text-slate-300 font-semibold">Role</TableHead>
                           <TableHead className="text-center text-slate-300 font-semibold">ACS</TableHead>
                           <TableHead className="text-center text-slate-300 font-semibold">VMS</TableHead>
-                          <TableHead className="text-right text-slate-300 font-semibold">Actions</TableHead>
+                          <TableHead className="text-center text-slate-300 font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -278,13 +278,13 @@ export default function ModuleHub() {
                           const isSelf = acc.username === user?.username;
                           return (
                             <TableRow key={acc.username} className="border-slate-800 hover:bg-slate-800/30">
-                              <TableCell>
+                              <TableCell className="text-center">
                                 <div>
                                   <p className="font-medium text-white">{acc.displayName}</p>
                                   <p className="text-sm text-slate-500">@{acc.username}</p>
                                 </div>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-center">
                                 <Badge
                                   variant="outline"
                                   className={cn(
@@ -316,7 +316,7 @@ export default function ModuleHub() {
                                   disabled={isSelf}
                                 />
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-center">
                                 <Button
                                   variant="ghost"
                                   size="icon"
