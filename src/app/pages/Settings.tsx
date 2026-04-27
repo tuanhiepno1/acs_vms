@@ -56,16 +56,16 @@ export function Settings() {
             <CardContent className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="companyName" className="text-slate-200">Company Name</Label>
-                <Input id="companyName" defaultValue="Teampl Platform" className="bg-slate-800 border-slate-700 text-white" />
+                <Input id="companyName" defaultValue="Timpl" className="bg-slate-800 border-slate-700 text-white" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="address" className="text-slate-200">Address</Label>
-                <Input id="address" defaultValue="350 Fifth Avenue, New York, NY 10118" className="bg-slate-800 border-slate-700 text-white" />
+                <Input id="address" defaultValue="4227 Pleasant Hill Rd Building 15, Duluth, GA 30096, United States" className="bg-slate-800 border-slate-700 text-white" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="phone" className="text-slate-200">Phone</Label>
-                  <Input id="phone" defaultValue="+1 (212) 555-0123" className="bg-slate-800 border-slate-700 text-white" />
+                  <Input id="phone" defaultValue="+16782485833" className="bg-slate-800 border-slate-700 text-white" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email" className="text-slate-200">Email</Label>
