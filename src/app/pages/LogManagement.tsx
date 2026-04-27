@@ -408,7 +408,7 @@ function AuthenticationLogTab() {
             <TableBody>
               {filtered.map((log) => (
                 <TableRow key={log.id} className={cn('border-slate-800 hover:bg-slate-800/50', log.status === 'denied' && 'bg-red-950/20')}>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     {log.captureImage ? (
                       <button type="button" onClick={() => setPreviewLog(log)} className="block rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500 transition-colors w-[56px] h-[56px]">
                         <FaceScanOverlay
@@ -426,39 +426,39 @@ function AuthenticationLogTab() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-center text-slate-400 text-sm whitespace-nowrap">
+                  <TableCell className="text-center text-slate-400 text-sm whitespace-nowrap align-middle">
                     <div className="flex items-center justify-center gap-2"><Clock className="size-3.5" />{fmt(log.timestamp)}</div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     <div>
                       <p className="text-white text-sm">{log.employeeName}</p>
                       <p className="text-slate-500 text-xs">{log.employeeNo || 'Unregistered'}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     <div className="flex items-center justify-center gap-2 text-slate-400 text-sm"><Building2 className="size-3.5" />{log.branch}</div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     <div>
                       <div className="flex items-center justify-center gap-2 text-slate-300 text-sm"><Camera className="size-3.5" />{log.deviceName}</div>
                       <p className="text-slate-500 text-xs">{log.doorName}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     <Badge variant="outline" className={log.direction === 'entry' ? 'border-blue-600 bg-blue-600/20 text-blue-400' : 'border-purple-600 bg-purple-600/20 text-purple-400'}>
                       {log.direction === 'entry' ? 'Entry' : 'Exit'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex flex-col gap-1">
-                      <Badge variant="outline" className={cn('w-fit gap-1', log.status === 'granted' ? 'border-green-600 bg-green-600/20 text-green-400' : 'border-red-600 bg-red-600/20 text-red-400')}>
+                  <TableCell className="text-center align-middle">
+                    <div className="flex flex-col items-center gap-1">
+                      <Badge variant="outline" className={cn('gap-1', log.status === 'granted' ? 'border-green-600 bg-green-600/20 text-green-400' : 'border-red-600 bg-red-600/20 text-red-400')}>
                         {log.status === 'granted' ? <CheckCircle2 className="size-3" /> : <XCircle className="size-3" />}
                         {log.status === 'granted' ? 'Granted' : 'Denied'}
                       </Badge>
                       {log.reason && <p className="text-red-400 text-xs mt-0.5">{log.reason}</p>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center align-middle">
                     <span className={cn('text-sm font-mono', (log.confidence ?? 0) >= 0.8 ? 'text-green-400' : (log.confidence ?? 0) >= 0.5 ? 'text-yellow-400' : 'text-red-400')}>
                       {log.confidence != null ? `${(log.confidence * 100).toFixed(0)}%` : '—'}
                     </span>
