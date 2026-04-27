@@ -66,16 +66,16 @@ export function Dashboard() {
     const interval = setInterval(() => {
       const people = [
         { name: 'David Wilson', photo: facePhotos['David Wilson'] },
-        { name: 'Jessica Martinez', photo: facePhotos['Jessica Martinez'] },
-        { name: 'Robert Taylor', photo: facePhotos['Robert Taylor'] },
-        { name: 'Amanda Brown', photo: facePhotos['Amanda Brown'] },
+        { name: 'Jennifer Martinez', photo: facePhotos['Jennifer Martinez'] },
+        { name: 'Robert Thomas', photo: facePhotos['Robert Thomas'] },
+        { name: 'Maria Garcia', photo: facePhotos['Maria Garcia'] },
         { name: 'John Smith', photo: facePhotos['John Smith'] },
         { name: 'Sarah Johnson', photo: facePhotos['Sarah Johnson'] },
         { name: 'Emily Davis', photo: facePhotos['Emily Davis'] },
         { name: 'Lisa Anderson', photo: facePhotos['Lisa Anderson'] },
       ];
-      const randomDevices = ['Main Entrance Terminal', 'Server Room Reader', 'Downtown Branch Terminal', 'Parking Garage Reader'];
-      const randomBranches = ['Headquarters', 'Downtown Branch', 'Westside Branch'];
+      const randomDevices = ['HQ Main Door Camera', 'HQ Sub Door Camera', 'Cartersville Door Camera', 'Manteca Door Camera', 'Savannah Door Camera', 'Vietnam Office Door Camera'];
+      const randomBranches = ['Headquarters', 'Cartersville', 'Manteca', 'Savannah', 'Vietnam Office'];
       const randomStatus: ('granted' | 'denied')[] = ['granted', 'granted', 'granted', 'denied'];
 
       const person = people[Math.floor(Math.random() * people.length)];

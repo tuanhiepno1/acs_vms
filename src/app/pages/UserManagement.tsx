@@ -204,9 +204,10 @@ export function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto rounded-lg border border-slate-800">
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow className="border-slate-800 bg-slate-800/40 hover:bg-slate-800/40">
+                    <TableHead className="text-center text-slate-300 font-semibold">Photo</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Employee</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Employee No</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Branch</TableHead>
@@ -220,14 +221,12 @@ export function UserManagement() {
                   {filtered.map((emp) => (
                     <TableRow key={emp.id} className="border-slate-800 hover:bg-slate-800/50">
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-3">
-                          <Avatar className="size-10">
-                            <AvatarImage src={emp.image} />
-                            <AvatarFallback className="bg-blue-600 text-white">{emp.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                          </Avatar>
-                          <p className="text-white font-medium">{emp.name}</p>
-                        </div>
+                        <Avatar className="size-10 mx-auto">
+                          <AvatarImage src={emp.image} />
+                          <AvatarFallback className="bg-blue-600 text-white">{emp.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
                       </TableCell>
+                      <TableCell className="text-center text-white font-medium">{emp.name}</TableCell>
                       <TableCell className="text-center text-slate-400 font-mono">{emp.employeeNo}</TableCell>
                       <TableCell className="text-center text-slate-400">{emp.branch}</TableCell>
                       <TableCell className="text-center">

@@ -9,7 +9,9 @@ import { Devices } from "./pages/Devices";
 import { Branches } from "./pages/Branches";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
+import { AuditLog } from "./pages/AuditLog";
 import { NotFound } from "./pages/NotFound";
+import { ComingSoon } from "./pages/ComingSoon";
 import Login from "./pages/Login";
 import ModuleHub from "./pages/ModuleHub";
 
@@ -33,11 +35,17 @@ export const router = createBrowserRouter([
       { path: "users", Component: UserManagement },
       { path: "devices", Component: Devices },
       { path: "logs", Component: LogManagement },
+      { path: "audit-log", Component: AuditLog },
       { path: "branches", Component: Branches },
       { path: "reports", Component: Reports },
       { path: "settings", Component: Settings },
       { path: "*", Component: NotFound },
     ],
+  },
+  {
+    path: "/vms",
+    element: <RequireAuth><ComingSoon /></RequireAuth>,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: "*",

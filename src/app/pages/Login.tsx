@@ -41,7 +41,7 @@ export default function Login() {
             <ShieldCheck className="size-8 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Teampl</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Security Management System</h1>
             <p className="mt-1 text-sm text-slate-400">Sign in to your account</p>
           </div>
         </div>

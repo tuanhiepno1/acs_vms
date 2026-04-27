@@ -167,10 +167,12 @@ export function Devices() {
             </div>
           ) : (
           <div className="overflow-x-auto rounded-lg border border-slate-800">
-            <Table className="min-w-[920px]">
+            <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="border-slate-800 bg-slate-800/40 hover:bg-slate-800/40">
+                  <TableHead className="text-center text-slate-300 font-semibold">Icon</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Device</TableHead>
+                  <TableHead className="text-center text-slate-300 font-semibold">Model</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Office</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Location</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Status</TableHead>
@@ -183,30 +185,26 @@ export function Devices() {
                 {filteredDevices.map((device) => (
                   <TableRow key={device.id} className="border-slate-800 hover:bg-slate-800/50">
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <div
+                      <div
+                        className={cn(
+                          'size-10 rounded-lg flex items-center justify-center mx-auto',
+                          device.status === 'online' && 'bg-green-600/20',
+                          device.status === 'offline' && 'bg-red-600/20',
+                          device.status === 'warning' && 'bg-yellow-600/20'
+                        )}
+                      >
+                        <Camera
                           className={cn(
-                            'size-10 rounded-lg flex items-center justify-center',
-                            device.status === 'online' && 'bg-green-600/20',
-                            device.status === 'offline' && 'bg-red-600/20',
-                            device.status === 'warning' && 'bg-yellow-600/20'
+                            'size-5',
+                            device.status === 'online' && 'text-green-500',
+                            device.status === 'offline' && 'text-red-500',
+                            device.status === 'warning' && 'text-yellow-500'
                           )}
-                        >
-                          <Camera
-                            className={cn(
-                              'size-5',
-                              device.status === 'online' && 'text-green-500',
-                              device.status === 'offline' && 'text-red-500',
-                              device.status === 'warning' && 'text-yellow-500'
-                            )}
-                          />
-                        </div>
-                        <div>
-                          <p className="text-white">{device.name}</p>
-                          <p className="text-slate-400">{device.model}</p>
-                        </div>
+                        />
                       </div>
                     </TableCell>
+                    <TableCell className="text-center text-white font-medium">{device.name}</TableCell>
+                    <TableCell className="text-center text-slate-400 text-sm">{device.model}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2 text-slate-400">
                         <Building2 className="size-4" />

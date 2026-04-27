@@ -51,7 +51,7 @@ interface ModuleDef {
 const modules: ModuleDef[] = [
   {
     id: 'acs',
-    name: 'Teampl ACS',
+    name: 'Access Control System',
     description:
       'Face recognition access management, door control, user management, and detailed reporting.',
     icon: ShieldCheck,
@@ -65,7 +65,7 @@ const modules: ModuleDef[] = [
   },
   {
     id: 'vms',
-    name: 'Teampl VMS',
+    name: 'Video Management System',
     description:
       'Live camera monitoring, video recording playback, event detection, and visual analytics.',
     icon: Video,
@@ -151,7 +151,7 @@ export default function ModuleHub() {
           <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600">
             <ShieldCheck className="size-5 text-white" />
           </div>
-          <span className="font-semibold tracking-tight text-white">Teampl</span>
+          <span className="font-semibold tracking-tight text-white">Security Management System</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-400 sm:inline">

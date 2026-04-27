@@ -12,6 +12,7 @@ import {
   X,
   ChevronDown,
   ShieldCheck,
+  Shield,
   Clock,
   ArrowLeft,
   LogOut,
@@ -35,6 +36,7 @@ const mainNav = [
   { name: 'Users', href: '/acs/users', icon: Users },
   { name: 'Devices', href: '/acs/devices', icon: Camera },
   { name: 'Logs', href: '/acs/logs', icon: FileText },
+  { name: 'Audit Log', href: '/acs/audit-log', icon: Shield },
   { name: 'Offices', href: '/acs/branches', icon: Building2 },
   { name: 'Reports', href: '/acs/reports', icon: BarChart3 },
   { name: 'Settings', href: '/acs/settings', icon: SettingsIcon },
@@ -83,7 +85,7 @@ export function Layout() {
               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center">
                 <ShieldCheck className="size-5 text-white" />
               </div>
-              <span className="text-white font-semibold tracking-tight">Teampl ACS</span>
+              <span className="text-white font-semibold tracking-tight">Access Control System</span>
             </div>
             <button onClick={() => setSidebarOpen(false)}>
               <X className="size-6 text-slate-400" />
@@ -131,7 +133,7 @@ export function Layout() {
               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center">
                 <ShieldCheck className="size-5 text-white" />
               </div>
-              <span className="text-white font-semibold tracking-tight">Teampl ACS</span>
+              <span className="text-white font-semibold tracking-tight">Access Control System</span>
             </div>
           </div>
           <nav className="flex-1 mt-6 px-3 flex flex-col">

@@ -78,8 +78,8 @@ export const facePhotos: Record<string, string> = {
   'Robert Thomas':      'https://randomuser.me/api/portraits/men/61.jpg',
   'Maria Garcia':       'https://randomuser.me/api/portraits/women/38.jpg',
   'Nguyen Van A':       'https://randomuser.me/api/portraits/men/76.jpg',
-  'Tran Thi B':         'https://randomuser.me/api/portraits/women/12.jpg',
-  'Unknown Person':     'https://randomuser.me/api/portraits/lego/1.jpg',
+  'Tran Thi B':         'https://randomuser.me/api/portraits/women/65.jpg',
+  'Unknown Person':     'https://randomuser.me/api/portraits/men/85.jpg',
 };
 
 // ── Access Logs (dashboard live feed) ───────────────────────────
