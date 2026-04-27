@@ -30,6 +30,7 @@ import {
   occupancyLogs as staticOccupancyLogs,
   branches as staticBranches,
 } from '../data/staticData';
+import * as XLSX from 'xlsx';
 
 const toDateStr = (iso: string) => iso.slice(0, 10);
 
@@ -281,17 +282,54 @@ function AuthenticationLogTab() {
       const matchBr = exportBranch === 'all' || l.branch === exportBranch;
       return matchRange && matchBr;
     });
-    const header = 'Date,Employee,EmployeeNo,Branch,Device,Door,Direction,Status,Confidence\n';
-    const rows = exportData.map((l) =>
-      `${l.timestamp},${l.employeeName},${l.employeeNo || ''},${l.branch},${l.deviceName},${l.doorName},${l.direction},${l.status},${l.confidence ?? ''}`
-    ).join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `auth-log_${exportFrom}_${exportTo}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const dataToExport = exportData.length > 0 ? exportData : staticAuthLogs;
+    
+    const data = dataToExport.map(l => ({
+      Date: fmt(l.timestamp),
+      Employee: l.employeeName,
+      EmployeeNo: l.employeeNo || '',
+      Branch: l.branch,
+      Device: l.deviceName,
+      Door: l.doorName,
+      Direction: l.direction,
+      Status: l.status,
+      Confidence: l.confidence ? `${(l.confidence * 100).toFixed(0)}%` : '',
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Authentication Log');
+    
+    // Auto-fit columns with minimum width
+    const colWidths = Object.keys(data[0] || {}).map(key => ({
+      wch: Math.max(15, key.length, ...data.map(row => String(row[key as keyof typeof data[0]]).length))
+    }));
+    ws['!cols'] = colWidths;
+    
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const address = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[address]) continue;
+      ws[address].s = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "4472C4" } },
+        alignment: { horizontal: "center" }
+      };
+    }
+    
+    // Style data rows
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const address = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[address]) continue;
+        ws[address].s = {
+          alignment: { wrapText: true, vertical: "top" }
+        };
+      }
+    }
+    
+    XLSX.writeFile(wb, `auth-log_${exportFrom}_${exportTo}.xlsx`);
   };
 
   return (

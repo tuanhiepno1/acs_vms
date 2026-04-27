@@ -241,14 +241,12 @@ export function UserManagement() {
                       <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.lastAuthTime)}</TableCell>
                       <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.registeredAt)}</TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="default" size="sm" className="gap-1.5 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700" onClick={() => openEdit(emp)}>
-                            <Edit className="size-3.5" />
-                            Edit
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-400 hover:bg-slate-800" onClick={() => openEdit(emp)}>
+                            <Edit className="size-4" />
                           </Button>
-                          <Button variant="default" size="sm" className="gap-1.5 bg-slate-800 text-white hover:bg-red-900/50 hover:text-red-400 border border-slate-700" onClick={() => setDeleteTarget(emp)}>
-                            <Trash2 className="size-3.5" />
-                            Delete
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-400 hover:bg-slate-800" onClick={() => setDeleteTarget(emp)}>
+                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </TableCell>

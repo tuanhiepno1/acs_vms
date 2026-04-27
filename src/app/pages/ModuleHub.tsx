@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, LogOut, Plus, ShieldCheck, Trash2, UserCog, Video } from 'lucide-react';
+import { ChevronDown, Lock, LogOut, Plus, Settings, ShieldCheck, Trash2, UserCog, Video } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -12,6 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
@@ -90,10 +97,12 @@ const EMPTY_FORM = {
 
 export default function ModuleHub() {
   const {
+    isAuthenticated,
     user,
-    logout,
-    hasModule,
     isAdmin,
+    hasModule,
+    logout,
+    changePassword,
     accounts,
     addAccount,
     updateAccountModules,
@@ -106,6 +115,9 @@ export default function ModuleHub() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordError, setPasswordError] = useState('');
 
   const handleAdd = () => {
     const mods: ModuleId[] = [];
@@ -135,6 +147,21 @@ export default function ModuleHub() {
     setDeleteTarget(null);
   };
 
+  const handleChangePassword = () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    const result = changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+    if (result.success) {
+      setChangePasswordOpen(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
+    } else {
+      setPasswordError(result.error ?? 'Failed to change password');
+    }
+  };
+
   const toggleModule = (username: string, moduleId: ModuleId, currentModules: ModuleId[]) => {
     const has = currentModules.includes(moduleId);
     const updated = has
@@ -154,23 +181,40 @@ export default function ModuleHub() {
           <span className="font-semibold tracking-tight text-white">Security Management System</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-slate-400 sm:inline">
-            {user?.displayName}{' '}
-            <span className="text-slate-600">·</span>{' '}
-            <span className="text-slate-500">{user?.role}</span>
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              logout();
-              navigate('/login', { replace: true });
-            }}
-            className="gap-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-          >
-            <LogOut className="size-4" />
-            <span className="hidden sm:inline">Sign Out</span>
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+              {user?.avatarInitials}
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium text-white">{user?.displayName}</p>
+              <p className="text-xs text-slate-500">{user?.role}</p>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center justify-center size-8 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white focus:outline-none">
+              <ChevronDown className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-slate-800" align="end">
+              <DropdownMenuItem
+                onClick={() => setChangePasswordOpen(true)}
+                className="text-slate-300 hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+              >
+                <Settings className="mr-2 size-4" />
+                Change Password
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-800" />
+              <DropdownMenuItem
+                onClick={() => {
+                  logout();
+                  navigate('/login', { replace: true });
+                }}
+                className="text-red-400 hover:bg-slate-800 hover:text-red-300 focus:bg-slate-800 focus:text-red-300"
+              >
+                <LogOut className="mr-2 size-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -461,6 +505,78 @@ export default function ModuleHub() {
             </Button>
             <Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Change Password</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Update your account password. Make sure to use a strong password.
+            </DialogDescription>
+          </DialogHeader>
+
+          {passwordError && (
+            <div className="rounded-lg border border-red-800/50 bg-red-950/50 px-4 py-3 text-sm text-red-300">
+              {passwordError}
+            </div>
+          )}
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label className="text-slate-200">Current Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-slate-200">New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-slate-200">Confirm New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChangePasswordOpen(false);
+                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setPasswordError('');
+              }}
+              className="border-slate-700 text-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+              className="bg-white text-slate-900 hover:bg-slate-100"
+            >
+              Change Password
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,6 +8,7 @@ import {
   Building2,
   BarChart3,
   Settings as SettingsIcon,
+  Settings,
   Menu,
   X,
   ChevronDown,
@@ -20,7 +21,16 @@ import {
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Input } from './ui/input';
+import { Label } from './ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +54,12 @@ const mainNav = [
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordError, setPasswordError] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, changePassword } = useAuth();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -68,6 +81,21 @@ export function Layout() {
   }, []);
 
   const headerTime = useMemo(() => timeFormatter.format(now), [now, timeFormatter]);
+
+  const handleChangePassword = () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    const result = changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+    if (result.success) {
+      setChangePasswordOpen(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
+    } else {
+      setPasswordError(result.error ?? 'Failed to change password');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -187,28 +215,42 @@ export function Layout() {
               <span className="text-sm tabular-nums">{headerTime}</span>
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 hover:bg-slate-800">
-                  <Avatar className="size-8">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-blue-600 text-white">{user?.avatarInitials ?? 'U'}</AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:inline text-white">{user?.displayName ?? 'User'}</span>
-                  <ChevronDown className="size-4 text-slate-400" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-slate-700">
-                <DropdownMenuLabel className="text-white">My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-slate-700" />
-                <DropdownMenuItem className="text-slate-300 focus:bg-slate-700 focus:text-white" onClick={() => navigate('/')}>Switch Module</DropdownMenuItem>
-                <DropdownMenuItem className="text-slate-300 focus:bg-slate-700 focus:text-white" onClick={() => navigate('/acs/settings')}>Settings</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button variant="ghost" size="icon" className="hover:bg-slate-800 text-slate-400 hover:text-red-400" onClick={() => { logout(); navigate('/login', { replace: true }); }}>
-              <LogOut className="size-5" />
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+                  {user?.avatarInitials}
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-white">{user?.displayName}</p>
+                  <p className="text-xs text-slate-500">{user?.role}</p>
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center justify-center size-8 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white focus:outline-none">
+                  <ChevronDown className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-slate-900 border-slate-800" align="end">
+                  <DropdownMenuItem
+                    onClick={() => setChangePasswordOpen(true)}
+                    className="text-slate-300 hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+                  >
+                    <Settings className="mr-2 size-4" />
+                    Change Password
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-800" />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      logout();
+                      navigate('/login', { replace: true });
+                    }}
+                    className="text-red-400 hover:bg-slate-800 hover:text-red-300 focus:bg-slate-800 focus:text-red-300"
+                  >
+                    <LogOut className="mr-2 size-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
@@ -217,6 +259,78 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Change Password</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Update your account password. Make sure to use a strong password.
+            </DialogDescription>
+          </DialogHeader>
+
+          {passwordError && (
+            <div className="rounded-lg border border-red-800/50 bg-red-950/50 px-4 py-3 text-sm text-red-300">
+              {passwordError}
+            </div>
+          )}
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label className="text-slate-200">Current Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-slate-200">New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-slate-200">Confirm New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                placeholder="••••••••"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChangePasswordOpen(false);
+                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setPasswordError('');
+              }}
+              className="border-slate-700 text-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+              className="bg-white text-slate-900 hover:bg-slate-100"
+            >
+              Change Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

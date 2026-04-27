@@ -23,6 +23,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   hasModule: (moduleId: ModuleId) => boolean;
+  changePassword: (currentPassword: string, newPassword: string) => { success: boolean; error?: string };
   // Admin account management
   accounts: User[];
   addAccount: (data: {
@@ -200,6 +201,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const changePassword = useCallback(
+    (currentPassword: string, newPassword: string) => {
+      if (!user) return { success: false, error: 'Not authenticated' };
+      if (!newPassword || newPassword.length < 4) {
+        return { success: false, error: 'Password must be at least 4 characters' };
+      }
+
+      const record = records.find((r) => r.username === user.username);
+      if (!record) return { success: false, error: 'User not found' };
+      if (record.password !== currentPassword) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      setRecords((prev) =>
+        prev.map((r) => (r.username === user.username ? { ...r, password: newPassword } : r)),
+      );
+      return { success: true };
+    },
+    [user, records],
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -209,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         hasModule,
+        changePassword,
         accounts,
         addAccount,
         updateAccountModules,
