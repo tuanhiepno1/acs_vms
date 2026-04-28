@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACS Project Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Dot-grid background ───────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout wrapper ────────────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Header / Title ────────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      font-size: 1.05rem;
+      color: #94a3b8;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* ── Flow connector (vertical spine) ───────────────────────── */
+    .flow {
+      position: relative;
+    }
+
+    .flow::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #3b82f6 0%, #8b5cf6 17%, #10b981 33%, #f59e0b 50%, #ef4444 67%, #06b6d4 83%, #ec4899 100%);
+      opacity: 0.35;
+      transform: translateX(-50%);
+    }
+
+    /* ── Row / Grid ────────────────────────────────────────────── */
+    .row {
+      display: grid;
+      gap: 28px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .row-top    { grid-template-columns: repeat(4, 1fr); }
+    .row-bottom { grid-template-columns: repeat(3, 1fr); max-width: 960px; margin-left: auto; margin-right: auto; }
+
+    /* ── Connector dots on spine ────────────────────────────────── */
+    .connector-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .connector-dot.top    { top: -7px; }
+    .connector-dot.bottom { bottom: -7px; }
+
+    /* ── Card ───────────────────────────────────────────────────── */
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      position: relative;
+      border: 1px solid rgba(148,163,184,0.08);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    /* Colored top-border accent */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20px;
+      right: 20px;
+      height: 3px;
+      border-radius: 0 0 3px 3px;
+    }
+
+    /* ── Step badge ─────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+
+    /* ── Card title ─────────────────────────────────────────────── */
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      line-height: 1.35;
+    }
+
+    /* ── Sub-items ──────────────────────────────────────────────── */
+    .card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .card li {
+      font-size: 0.84rem;
+      color: #94a3b8;
+      padding-left: 22px;
+      position: relative;
+      line-height: 1.45;
+    }
+
+    .card li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0.7;
+    }
+
+    /* ── Icon area ──────────────────────────────────────────────── */
+    .card-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 1.5rem;
+      opacity: 0.6;
+    }
+
+    /* ── Per-step colours ──────────────────────────────────────── */
+    /* Step 1 – Blue */
+    .step-1 .badge                { background: #3b82f6; }
+    .step-1::before               { background: #3b82f6; }
+    .step-1:hover                 { box-shadow: 0 8px 32px rgba(59,130,246,0.18); }
+    .step-1 h2                    { color: #93bbfd; }
+    .step-1 li::before            { background: #3b82f6; }
+
+    /* Step 2 – Purple */
+    .step-2 .badge                { background: #8b5cf6; }
+    .step-2::before               { background: #8b5cf6; }
+    .step-2:hover                 { box-shadow: 0 8px 32px rgba(139,92,246,0.18); }
+    .step-2 h2                    { color: #c4b5fd; }
+    .step-2 li::before            { background: #8b5cf6; }
+
+    /* Step 3 – Green */
+    .step-3 .badge                { background: #10b981; }
+    .step-3::before               { background: #10b981; }
+    .step-3:hover                 { box-shadow: 0 8px 32px rgba(16,185,129,0.18); }
+    .step-3 h2                    { color: #6ee7b7; }
+    .step-3 li::before            { background: #10b981; }
+
+    /* Step 4 – Orange */
+    .step-4 .badge                { background: #f59e0b; }
+    .step-4::before               { background: #f59e0b; }
+    .step-4:hover                 { box-shadow: 0 8px 32px rgba(245,158,11,0.18); }
+    .step-4 h2                    { color: #fcd34d; }
+    .step-4 li::before            { background: #f59e0b; }
+
+    /* Step 5 – Red */
+    .step-5 .badge                { background: #ef4444; }
+    .step-5::before               { background: #ef4444; }
+    .step-5:hover                 { box-shadow: 0 8px 32px rgba(239,68,68,0.18); }
+    .step-5 h2                    { color: #fca5a5; }
+    .step-5 li::before            { background: #ef4444; }
+
+    /* Step 6 – Cyan */
+    .step-6 .badge                { background: #06b6d4; }
+    .step-6::before               { background: #06b6d4; }
+    .step-6:hover                 { box-shadow: 0 8px 32px rgba(6,182,212,0.18); }
+    .step-6 h2                    { color: #67e8f9; }
+    .step-6 li::before            { background: #06b6d4; }
+
+    /* Step 7 – Pink */
+    .step-7 .badge                { background: #ec4899; }
+    .step-7::before               { background: #ec4899; }
+    .step-7:hover                 { box-shadow: 0 8px 32px rgba(236,72,153,0.18); }
+    .step-7 h2                    { color: #f9a8d4; }
+    .step-7 li::before            { background: #ec4899; }
+
+    /* ── Horizontal connector lines (between cards in a row) ──── */
+    .row-top .card:not(:last-child)::after,
+    .row-bottom .card:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -16px;
+      width: 28px;
+      height: 2px;
+      background: rgba(148,163,184,0.18);
+      z-index: 1;
+    }
+
+    /* ── Bridge connector between rows ─────────────────────────── */
+    .bridge {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 48px;
+      position: relative;
+    }
+
+    .bridge::before {
+      content: '';
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(245,158,11,0.4), rgba(239,68,68,0.4));
+    }
+
+    .bridge-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid #94a3b8;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── SVG Connector Arrows ──────────────────────────────────── */
+    .svg-connectors {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      margin-top: 56px;
+      color: #475569;
+      font-size: 0.82rem;
+    }
+
+    .footer span {
+      background: linear-gradient(135deg, #3b82f6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .row-top    { grid-template-columns: repeat(2, 1fr); }
+      .row-bottom { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
+      .flow::before { display: none; }
+      .row-top .card:not(:last-child)::after,
+      .row-bottom .card:not(:last-child)::after { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .row-top, .row-bottom { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ─── Header ──────────────────────────────────────────────── -->
+  <header class="header">
+    <h1>🔐 Build an Access Control System (ACS)</h1>
+    <p>A step-by-step project plan for a face-recognition-based, multi-branch access control platform with modular licensing.</p>
+  </header>
+
+  <!-- ─── Flow Container ─────────────────────────────────────── -->
+  <div class="flow">
+
+    <!-- Row 1: Steps 1-4 -->
+    <div class="row row-top">
+
+      <!-- Step 1 -->
+      <div class="card step-1">
+        <span class="card-icon">📐</span>
+        <div class="badge">1</div>
+        <h2>Define Requirements &amp; Architecture</h2>
+        <ul>
+          <li>Face recognition-based access control</li>
+          <li>Multi-branch support (5 offices)</li>
+          <li>Role-based access: Admin, Operator, Viewer</li>
+          <li>Modular licensing: ACS + VMS</li>
+        </ul>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card step-2">
+        <span class="card-icon">🔑</span>
+        <div class="badge">2</div>
+        <h2>Set Up Authentication &amp; Accounts</h2>
+        <ul>
+          <li>Login system with session management</li>
+          <li>Role-based permissions</li>
+          <li>Password management &amp; 2FA</li>
+          <li>Module access licensing per account</li>
+        </ul>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card step-3">
+        <span class="card-icon">👤</span>
+        <div class="badge">3</div>
+        <h2>Build User &amp; Employee Management</h2>
+        <ul>
+          <li>Employee registration with face photos</li>
+          <li>Validity tracking: valid / expired / suspended</li>
+          <li>Branch assignment</li>
+          <li>Face recognition enrollment</li>
+        </ul>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="card step-4">
+        <span class="card-icon">🚪</span>
+        <div class="badge">4</div>
+        <h2>Develop Device &amp; Door Management</h2>
+        <ul>
+          <li>Camera integration (FaceID Pro X1, Mini S2, Compact C1)</li>
+          <li>Door control: lock / unlock, access levels</li>
+          <li>Device monitoring: online / offline / warning</li>
+          <li>Firmware &amp; IP tracking</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bridge between rows -->
+    <div class="bridge">
+      <div class="bridge-dot"></div>
+    </div>
+
+    <!-- Row 2: Steps 5-7 -->
+    <div class="row row-bottom">
+
+      <!-- Step 5 -->
+      <div class="card step-5">
+        <span class="card-icon">📋</span>
+        <div class="badge">5</div>
+        <h2>Implement Log &amp; Monitoring System</h2>
+        <ul>
+          <li>Authentication logs: entry / exit + confidence scores</li>
+          <li>Device logs: connect / disconnect / restart</li>
+          <li>Emergency logs: intrusion, tamper, fire</li>
+          <li>Occupancy tracking: hours, entry / exit</li>
+        </ul>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="card step-6">
+        <span class="card-icon">📊</span>
+        <div class="badge">6</div>
+        <h2>Create Dashboard &amp; Reports</h2>
+        <ul>
+          <li>Real-time access event feed</li>
+          <li>Device status overview</li>
+          <li>Access trend charts &amp; peak hours</li>
+          <li>CSV export functionality</li>
+        </ul>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="card step-7">
+        <span class="card-icon">⚙️</span>
+        <div class="badge">7</div>
+        <h2>Configure Settings &amp; Security</h2>
+        <ul>
+          <li>Notification preferences</li>
+          <li>2FA, session timeout, password policy</li>
+          <li>System configuration</li>
+          <li>Multi-branch office management</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /.flow -->
+
+  <!-- ─── Footer ──────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span>Access Control System</span> &middot; Project Planning Template
+  </footer>
+
+</div><!-- /.page -->
+
+</body>
+</html>

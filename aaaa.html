@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACS Project Plan</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #111827;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: rgba(148, 163, 184, 0.18);
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 34%),
+        radial-gradient(circle at right, rgba(236, 72, 153, 0.12), transparent 32%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      max-width: 860px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .note {
+      margin: 0 auto 28px;
+      max-width: 920px;
+      padding: 14px 18px;
+      border: 1px solid rgba(96, 165, 250, 0.16);
+      background: rgba(15, 23, 42, 0.72);
+      border-radius: 14px;
+      color: #cbd5e1;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .map {
+      display: grid;
+      gap: 20px;
+    }
+
+    .phase {
+      position: relative;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(17, 24, 39, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px 22px 20px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28);
+    }
+
+    .phase::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 0;
+      height: 4px;
+      border-radius: 0 0 999px 999px;
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .phase-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #fff;
+      flex: 0 0 auto;
+    }
+
+    .phase-title {
+      font-size: 1.1rem;
+      line-height: 1.35;
+      font-weight: 750;
+      padding-top: 2px;
+    }
+
+    .phase-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.5;
+    }
+
+    .items {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .items li {
+      position: relative;
+      padding-left: 22px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .items li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.65em;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .phase-1::before,
+    .phase-1 .phase-number,
+    .phase-1 .items li::before {
+      background: var(--blue);
+    }
+
+    .phase-2::before,
+    .phase-2 .phase-number,
+    .phase-2 .items li::before {
+      background: var(--purple);
+    }
+
+    .phase-3::before,
+    .phase-3 .phase-number,
+    .phase-3 .items li::before {
+      background: var(--green);
+    }
+
+    .phase-4::before,
+    .phase-4 .phase-number,
+    .phase-4 .items li::before {
+      background: var(--amber);
+    }
+
+    .phase-5::before,
+    .phase-5 .phase-number,
+    .phase-5 .items li::before {
+      background: var(--red);
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.82rem;
+    }
+
+    .footer span {
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 32px 16px 56px;
+      }
+
+      .phase {
+        padding: 20px 16px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1>Build an Access Control System (ACS)</h1>
+      <p>
+        XMind-ready project plan for a face-recognition-based access control platform with multi-branch support,
+        role-based access, and modular project delivery.
+      </p>
+    </header>
+
+    <div class="note">
+      Use each phase below as a main branch in XMind. The outline follows your <strong>plan.md</strong> and expands it
+      with ACS-specific items visible in the app surface, so the diagram is easier to present and execute.
+    </div>
+
+    <main class="map">
+      <section class="phase phase-1">
+        <div class="phase-header">
+          <div class="phase-number">1</div>
+          <div>
+            <div class="phase-title">Planning &amp; Requirements</div>
+            <div class="phase-subtitle">Project kickoff, scope definition, team assignment, and delivery planning.</div>
+          </div>
+        </div>
+        <ul class="items">
+          <li>Kick-off meeting</li>
+          <li>Define user roles and permissions</li>
+          <li>Collect additional requirements</li>
+          <li>Task allocation meeting for breakdown and assignment</li>
+          <li>Frontend team: Member 1, Member 2</li>
+          <li>Backend team: Member 3, Member 4</li>
+          <li>Confirm tech stack</li>
+          <li>GitHub repository setup</li>
+          <li>Set project timeline and milestones</li>
+        </ul>
+      </section>
+
+      <section class="phase phase-2">
+        <div class="phase-header">
+          <div class="phase-number">2</div>
+          <div>
+            <div class="phase-title">UI/UX Design &amp; Database Design</div>
+            <div class="phase-subtitle">Screen structure, visual planning, and data model preparation.</div>
+          </div>
+        </div>
+        <ul class="items">
+          <li>
+            UI/UX design
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Design the dark admin dashboard shell and responsive layout</li>
+              <li>Map the module flow: Module Hub, Dashboard, Users, Devices, Logs, Reports, Settings</li>
+              <li>Plan reusable table, card, dialog, badge, and filter patterns</li>
+              <li>Design auth screens, account management, and module license states</li>
+              <li>Design face capture preview, scan overlays, and result states</li>
+              <li>Design empty states, loading states, and no-results states</li>
+              <li>Define mobile and desktop behavior for each core screen</li>
+            </ul>
+          </li>
+          <li>
+            Database design
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Design entities for accounts, users, employees, branches, devices, and doors</li>
+              <li>Design log tables for access events, device events, emergency events, and occupancy records</li>
+              <li>Define relationships between branch, device, door, and employee records</li>
+              <li>Define status fields and enums such as validity, device status, door type, and alarm severity</li>
+              <li>Prepare fields for face photo data, confidence score, reasons, and capture images</li>
+              <li>Define reporting fields for counts, timestamps, and daily summaries</li>
+            </ul>
+          </li>
+          <li>Set up database environment and seed data</li>
+          <li>Define ERD and foreign key relationships</li>
+          <li>Prepare indexing and query strategy for logs and reports</li>
+        </ul>
+      </section>
+
+      <section class="phase phase-3">
+        <div class="phase-header">
+          <div class="phase-number">3</div>
+          <div>
+            <div class="phase-title">Frontend Development</div>
+            <div class="phase-subtitle">Build the ACS interface and connect all major screens in the app shell.</div>
+          </div>
+        </div>
+        <ul class="items">
+          <li>App shell and routing</li>
+          <li>Login and session management UI</li>
+          <li>
+            Module Hub and access gating
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Render ACS and VMS module cards</li>
+              <li>Show locked or licensed states per account</li>
+              <li>Support role-based account management for administrators</li>
+              <li>Support password change and sign out actions</li>
+            </ul>
+          </li>
+          <li>
+            Dashboard
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Show live access summary cards</li>
+              <li>Display recent access feed</li>
+              <li>Show device and branch overview stats</li>
+              <li>Show face scan overlay in activity cards</li>
+            </ul>
+          </li>
+          <li>
+            User management
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Register employees with photo upload</li>
+              <li>Track employee number, branch, and validity state</li>
+              <li>Search, filter, edit, and delete employees</li>
+              <li>Display last authentication time and registration time</li>
+            </ul>
+          </li>
+          <li>
+            Device management
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Register face recognition terminals and door controllers</li>
+              <li>Track model, branch, location, IP address, firmware version, and daily scan count</li>
+              <li>Filter by office and device status</li>
+              <li>Edit and delete devices from the table view</li>
+            </ul>
+          </li>
+          <li>
+            Office / branch management
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Manage office name, address, manager, phone, and email</li>
+              <li>Show employee count and device count per branch</li>
+              <li>Add, edit, search, and delete office records</li>
+            </ul>
+          </li>
+          <li>
+            Log management
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Device log tab for connect, disconnect, restart, and firmware update events</li>
+              <li>Emergency log tab for intrusion, tamper, forced door, held door, and fire events</li>
+              <li>Authentication log tab for entry and exit records with confidence score</li>
+              <li>Occupancy log tab for daily hours and attendance tracking</li>
+              <li>Search, date filter, branch filter, and export actions</li>
+              <li>Face capture preview dialog for authentication records</li>
+            </ul>
+          </li>
+          <li>
+            Reports
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Summary cards for access counts, granted, denied, and active users</li>
+              <li>Charts for daily access, office distribution, and peak hours</li>
+              <li>Top active users panel</li>
+              <li>CSV export action and period selector</li>
+            </ul>
+          </li>
+          <li>
+            Settings
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>General company profile settings</li>
+              <li>Notification preferences</li>
+              <li>Security settings such as 2FA, session timeout, and password policy</li>
+              <li>System backup and retention settings</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <section class="phase phase-4">
+        <div class="phase-header">
+          <div class="phase-number">4</div>
+          <div>
+            <div class="phase-title">Backend Development</div>
+            <div class="phase-subtitle">Implement APIs, business rules, and database-backed ACS workflows.</div>
+          </div>
+        </div>
+        <ul class="items">
+          <li>
+            Authentication and session APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Login and logout flow</li>
+              <li>Session persistence and current user lookup</li>
+              <li>Password change workflow</li>
+              <li>Account bootstrap from seeded access data</li>
+            </ul>
+          </li>
+          <li>
+            Role and module licensing APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Administrator, Operator, and Viewer access rules</li>
+              <li>ACS and VMS module licensing per account</li>
+              <li>Locked state when a module is not licensed</li>
+              <li>Admin-only account management actions</li>
+            </ul>
+          </li>
+          <li>
+            Employee and user APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Register employee name, number, branch, photo, and validity</li>
+              <li>Update employee status to valid, expired, or suspended</li>
+              <li>Store face enrollment photo data</li>
+              <li>Return last authentication and registration timestamps</li>
+            </ul>
+          </li>
+          <li>
+            Device and door APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Manage device name, model, branch, location, IP, and firmware version</li>
+              <li>Track online, offline, warning, and maintenance status</li>
+              <li>Link doors to devices and store door access levels</li>
+              <li>Track door lock and unlock state</li>
+            </ul>
+          </li>
+          <li>
+            Branch and office APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Store office contact information and manager details</li>
+              <li>Track employees and devices per office</li>
+              <li>Support active and inactive office status</li>
+            </ul>
+          </li>
+          <li>
+            Log and audit APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Authentication logs with entry, exit, granted, denied, confidence, and capture image</li>
+              <li>Device logs for connection, restart, and firmware update events</li>
+              <li>Emergency logs for intrusion, tamper, forced door, held door, and fire</li>
+              <li>Occupancy records with first entry, last exit, and total hours</li>
+              <li>Audit log support for configuration and system actions</li>
+            </ul>
+          </li>
+          <li>
+            Reports and export APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Summary metrics for access volume, granted, denied, and active users</li>
+              <li>Aggregated data for daily trends, office distribution, and peak hour analysis</li>
+              <li>CSV or spreadsheet export endpoints</li>
+            </ul>
+          </li>
+          <li>
+            Settings and configuration APIs
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Notification settings</li>
+              <li>Security policy settings such as 2FA and session timeout</li>
+              <li>Backup and retention configuration</li>
+              <li>General company profile settings</li>
+            </ul>
+          </li>
+          <li>
+            Database services and validation
+            <ul class="items" style="margin-top: 10px; margin-left: 8px;">
+              <li>Record validation and relationship checks</li>
+              <li>Filtering and search support for list pages</li>
+              <li>Seed data and fixtures for offices, devices, users, and logs</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <section class="phase phase-5">
+        <div class="phase-header">
+          <div class="phase-number">5</div>
+          <div>
+            <div class="phase-title">Testing &amp; QA</div>
+            <div class="phase-subtitle">Validate each layer before release and close the project with bug fixing.</div>
+          </div>
+        </div>
+        <ul class="items">
+          <li>Frontend testing</li>
+          <li>Backend testing</li>
+          <li>Integration testing</li>
+          <li>Bug fixing and QA review</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Access Control System</span> project planning template
+    </footer>
+  </div>
+</body>
+</html>
