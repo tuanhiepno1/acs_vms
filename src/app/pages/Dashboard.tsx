@@ -46,9 +46,19 @@ export function Dashboard() {
 
   const [accessEvents, setAccessEvents] = useLocalStorage<AccessEvent[]>('acs_dashboard_events', []);
 
+  // Normalize timestamps — localStorage serialization turns Date objects into strings
+  const events = useMemo(
+    () =>
+      accessEvents.map((e) => ({
+        ...e,
+        timestamp: e.timestamp instanceof Date ? e.timestamp : new Date(e.timestamp),
+      })),
+    [accessEvents],
+  );
+
   // Seed initial events from employee data if empty
   useEffect(() => {
-    if (accessEvents.length > 0) return;
+    if (events.length > 0) return;
     const seedEvents: AccessEvent[] = employees.slice(0, 10).map((emp, i) => ({
       id: `seed-${i}`,
       userName: emp.name,
@@ -61,7 +71,7 @@ export function Dashboard() {
       reason: emp.validity !== 'valid' ? `${emp.validity} validity` : undefined,
     }));
     setAccessEvents(seedEvents);
-  }, [accessEvents.length, employees, deviceList, setAccessEvents]);
+  }, [events.length, employees, deviceList, setAccessEvents]);
 
   const deviceSummary = useMemo(
     () => ({
@@ -102,10 +112,10 @@ export function Dashboard() {
   }, [employees, deviceList, setAccessEvents]);
 
   const stats = useMemo(() => ({
-    totalToday: accessEvents.length,
-    granted: accessEvents.filter(e => e.status === 'granted').length,
-    denied: accessEvents.filter(e => e.status === 'denied').length,
-  }), [accessEvents]);
+    totalToday: events.length,
+    granted: events.filter(e => e.status === 'granted').length,
+    denied: events.filter(e => e.status === 'denied').length,
+  }), [events]);
 
   const timeFormatter = useMemo(() => {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;
@@ -118,18 +128,18 @@ export function Dashboard() {
     });
   }, []);
 
-  const [selectedEventId, setSelectedEventId] = useState<string>(() => accessEvents[0]?.id ?? '');
+  const [selectedEventId, setSelectedEventId] = useState<string>(() => events[0]?.id ?? '');
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
-    if (!selectedEventId && accessEvents[0]?.id) {
-      setSelectedEventId(accessEvents[0].id);
+    if (!selectedEventId && events[0]?.id) {
+      setSelectedEventId(events[0].id);
     }
-  }, [accessEvents, selectedEventId]);
+  }, [events, selectedEventId]);
 
   const selectedEvent = useMemo(
-    () => accessEvents.find((e) => e.id === selectedEventId) ?? accessEvents[0],
-    [accessEvents, selectedEventId],
+    () => events.find((e) => e.id === selectedEventId) ?? events[0],
+    [events, selectedEventId],
   );
 
   const [selectedDateTime, setSelectedDateTime] = useState<string>('');
@@ -154,7 +164,7 @@ export function Dashboard() {
     const target = h * 3600 + m * 60 + s;
 
     let best: { id: string; diff: number } | null = null;
-    for (const e of accessEvents) {
+    for (const e of events) {
       const t = e.timestamp;
       const seconds = t.getHours() * 3600 + t.getMinutes() * 60 + t.getSeconds();
       const diff = Math.abs(seconds - target);
@@ -222,7 +232,7 @@ export function Dashboard() {
             <div className="h-full min-h-0 flex flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-slate-500 text-sm">
-                  Showing <span className="text-slate-300">{accessEvents.length}</span> events
+                  Showing <span className="text-slate-300">{events.length}</span> events
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block text-slate-500 text-sm">
@@ -278,7 +288,7 @@ export function Dashboard() {
                   }}
                 >
                   <div className="min-w-max h-full flex items-stretch gap-4 pr-3">
-                    {accessEvents.map((event) => {
+                    {events.map((event) => {
                       const isSelected = event.id === selectedEventId;
                       const statusDot =
                         event.status === 'granted' ? 'bg-green-500' : 'bg-red-500';
