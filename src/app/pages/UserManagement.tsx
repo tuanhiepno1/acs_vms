@@ -21,7 +21,8 @@ import {
   Download, Users, UserCheck, UserX, ShieldAlert,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { employees as staticEmployees, branches as staticBranches } from '../data/staticData';
+import { useLocalStorage } from '../lib/use-local-storage';
+import { employees as staticEmployees, branches as defaultBranches } from '../data/staticData';
 import type { Employee } from '../types';
 
 const fmt = (iso?: string) => {
@@ -35,7 +36,8 @@ const fmt = (iso?: string) => {
 const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended' };
 
 export function UserManagement() {
-  const [list, setList] = useState<Employee[]>(staticEmployees);
+  const [list, setList] = useLocalStorage<Employee[]>('acs_employees', staticEmployees);
+  const [branchList] = useLocalStorage('acs_branches', defaultBranches);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValidity, setFilterValidity] = useState('all');
   const [filterBranch, setFilterBranch] = useState('all');
@@ -70,7 +72,7 @@ export function UserManagement() {
       id: `EMP-${Date.now()}`,
       name: form.name,
       employeeNo: form.employeeNo,
-      branch: form.branch || staticBranches[0]?.name || '',
+      branch: form.branch || branchList[0]?.name || '',
       image: form.image || undefined,
       validity: form.validity,
       registeredAt: new Date().toISOString(),
@@ -132,7 +134,7 @@ export function UserManagement() {
         <Select value={form.branch} onValueChange={(v) => setForm({ ...form, branch: v })}>
           <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select branch" /></SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-700">
-            {staticBranches.map((b) => (
+            {branchList.map((b) => (
               <SelectItem key={b.id} value={b.name} className="text-white">{b.name}</SelectItem>
             ))}
           </SelectContent>
@@ -206,7 +208,7 @@ export function UserManagement() {
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Branch" /></SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
                   <SelectItem value="all" className="text-white">All Branches</SelectItem>
-                  {staticBranches.map((b) => (
+                  {branchList.map((b) => (
                     <SelectItem key={b.id} value={b.name} className="text-white">{b.name}</SelectItem>
                   ))}
                 </SelectContent>

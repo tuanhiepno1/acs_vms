@@ -41,12 +41,14 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { devices as staticDevices, branches as staticBranches } from '../data/staticData';
+import { useLocalStorage } from '../lib/use-local-storage';
+import { devices as staticDevices, branches as defaultBranches } from '../data/staticData';
 import type { Device } from '../types';
 import { formatTimeAgo } from '../lib/date';
 
 export function Devices() {
-  const [devices, setDevices] = useState<Device[]>(staticDevices);
+  const [devices, setDevices] = useLocalStorage<Device[]>('acs_devices', staticDevices);
+  const [branchList] = useLocalStorage('acs_branches', defaultBranches);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterBranch, setFilterBranch] = useState('all');
@@ -149,7 +151,7 @@ export function Devices() {
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all" className="text-white">All Offices</SelectItem>
-                {staticBranches.map(b => (
+                {branchList.map(b => (
                   <SelectItem key={b.id} value={b.name} className="text-white">{b.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -281,7 +283,7 @@ export function Devices() {
           <DialogHeader><DialogTitle className="text-white">Add New Device</DialogTitle><DialogDescription className="text-slate-400">Enter device information</DialogDescription></DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2"><Label className="text-slate-200">Device Name</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Main Entrance" className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Office</Label><Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select office" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{staticBranches.map(branch => <SelectItem key={branch.id} value={branch.name} className="text-white">{branch.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label className="text-slate-200">Office</Label><Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select office" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{branchList.map(branch => <SelectItem key={branch.id} value={branch.name} className="text-white">{branch.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label className="text-slate-200">Location</Label><Input value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="Ground Floor" className="bg-slate-800 border-slate-700 text-white" /></div>
             <div className="grid gap-2"><Label className="text-slate-200">Model</Label><Select value={form.model} onValueChange={v => setForm({...form, model: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select model" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="FaceID Pro X1" className="text-white">FaceID Pro X1</SelectItem><SelectItem value="FaceID Pro X2" className="text-white">FaceID Pro X2</SelectItem><SelectItem value="FaceID Standard" className="text-white">FaceID Standard</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label className="text-slate-200">IP Address</Label><Input value={form.ipAddress} onChange={e => setForm({...form, ipAddress: e.target.value})} placeholder="192.168.1.101" className="bg-slate-800 border-slate-700 text-white" /></div>
@@ -296,7 +298,7 @@ export function Devices() {
           <DialogHeader><DialogTitle className="text-white">Edit Device</DialogTitle><DialogDescription className="text-slate-400">Update device information</DialogDescription></DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2"><Label className="text-slate-200">Device Name</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Office</Label><Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{staticBranches.map(branch => <SelectItem key={branch.id} value={branch.name} className="text-white">{branch.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label className="text-slate-200">Office</Label><Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{branchList.map(branch => <SelectItem key={branch.id} value={branch.name} className="text-white">{branch.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label className="text-slate-200">Location</Label><Input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div className="grid gap-2"><Label className="text-slate-200">Model</Label><Select value={form.model} onValueChange={v => setForm({...form, model: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="FaceID Pro X1" className="text-white">FaceID Pro X1</SelectItem><SelectItem value="FaceID Pro X2" className="text-white">FaceID Pro X2</SelectItem><SelectItem value="FaceID Standard" className="text-white">FaceID Standard</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label className="text-slate-200">IP Address</Label><Input value={form.ipAddress} onChange={e => setForm({...form, ipAddress: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>

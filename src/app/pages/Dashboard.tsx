@@ -21,7 +21,9 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { accessLogs, devices, dashboardStats, facePhotos } from '../data/staticData';
+import { useLocalStorage } from '../lib/use-local-storage';
+import { employees as defaultEmployees, devices as defaultDevices, branches as defaultBranches } from '../data/staticData';
+import type { Employee, Device } from '../types';
 import { formatTimeAgo } from '../lib/date';
 import { FaceScanOverlay } from '../components/FaceScanOverlay';
 
@@ -38,71 +40,72 @@ interface AccessEvent {
 }
 
 export function Dashboard() {
-  const [accessEvents, setAccessEvents] = useState<AccessEvent[]>(() => {
-    return accessLogs.map((log) => ({
-      id: log.id,
-      userName: log.userName,
-      deviceName: log.deviceName,
-      branchName: log.branch,
-      status: log.status,
-      confidence: log.confidence,
-      timestamp: new Date(log.timestamp),
-      facePhotoUrl: facePhotos[log.userName],
+  const [employees] = useLocalStorage<Employee[]>('acs_employees', defaultEmployees);
+  const [deviceList] = useLocalStorage<Device[]>('acs_devices', defaultDevices);
+  const [branchList] = useLocalStorage('acs_branches', defaultBranches);
+
+  const [accessEvents, setAccessEvents] = useLocalStorage<AccessEvent[]>('acs_dashboard_events', []);
+
+  // Seed initial events from employee data if empty
+  useEffect(() => {
+    if (accessEvents.length > 0) return;
+    const seedEvents: AccessEvent[] = employees.slice(0, 10).map((emp, i) => ({
+      id: `seed-${i}`,
+      userName: emp.name,
+      deviceName: deviceList[i % deviceList.length]?.name ?? 'Unknown Device',
+      branchName: emp.branch,
+      status: emp.validity === 'valid' ? 'granted' as const : 'denied' as const,
+      confidence: emp.validity === 'valid' ? 0.88 + Math.random() * 0.11 : 0.15 + Math.random() * 0.35,
+      timestamp: new Date(Date.now() - (10 - i) * 60000),
+      facePhotoUrl: emp.image,
+      reason: emp.validity !== 'valid' ? `${emp.validity} validity` : undefined,
     }));
-  });
+    setAccessEvents(seedEvents);
+  }, [accessEvents.length, employees, deviceList, setAccessEvents]);
 
   const deviceSummary = useMemo(
     () => ({
-      total: devices.length,
-      online: devices.filter(d => d.status === 'online').length,
-      warning: devices.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
-      offline: devices.filter(d => d.status === 'offline').length,
+      total: deviceList.length,
+      online: deviceList.filter(d => d.status === 'online').length,
+      warning: deviceList.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
+      offline: deviceList.filter(d => d.status === 'offline').length,
     }),
-    [],
+    [deviceList],
   );
 
-  // Simulate live updates
+  // Simulate live updates from actual employee/device data
   useEffect(() => {
-    const interval = setInterval(() => {
-      const people = [
-        { name: 'David Wilson', photo: facePhotos['David Wilson'] },
-        { name: 'Jennifer Martinez', photo: facePhotos['Jennifer Martinez'] },
-        { name: 'Robert Thomas', photo: facePhotos['Robert Thomas'] },
-        { name: 'Maria Garcia', photo: facePhotos['Maria Garcia'] },
-        { name: 'John Smith', photo: facePhotos['John Smith'] },
-        { name: 'Sarah Johnson', photo: facePhotos['Sarah Johnson'] },
-        { name: 'Emily Davis', photo: facePhotos['Emily Davis'] },
-        { name: 'Lisa Anderson', photo: facePhotos['Lisa Anderson'] },
-      ];
-      const randomDevices = ['HQ Main Door Camera', 'HQ Sub Door Camera', 'Cartersville Door Camera', 'Manteca Door Camera', 'Savannah Door Camera', 'Vietnam Office Door Camera'];
-      const randomBranches = ['Headquarters', 'Cartersville', 'Manteca', 'Savannah', 'Vietnam Office'];
-      const randomStatus: ('granted' | 'denied')[] = ['granted', 'granted', 'granted', 'denied'];
+    const validEmployees = employees.filter(e => e.validity === 'valid');
+    if (validEmployees.length === 0 || deviceList.length === 0) return;
 
-      const person = people[Math.floor(Math.random() * people.length)];
-      const status = randomStatus[Math.floor(Math.random() * randomStatus.length)];
+    const interval = setInterval(() => {
+      const emp = validEmployees[Math.floor(Math.random() * validEmployees.length)];
+      const device = deviceList[Math.floor(Math.random() * deviceList.length)];
+      const statuses: ('granted' | 'denied')[] = ['granted', 'granted', 'granted', 'denied'];
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
 
       const newEvent: AccessEvent = {
         id: Date.now().toString(),
-        userName: person.name,
-        deviceName: randomDevices[Math.floor(Math.random() * randomDevices.length)],
-        branchName: randomBranches[Math.floor(Math.random() * randomBranches.length)],
+        userName: emp.name,
+        deviceName: device.name,
+        branchName: emp.branch,
         status,
         confidence: status === 'granted' ? 0.85 + Math.random() * 0.14 : 0.15 + Math.random() * 0.35,
         timestamp: new Date(),
-        facePhotoUrl: person.photo,
+        facePhotoUrl: emp.image,
       };
 
-      setAccessEvents((prev) => [newEvent, ...prev]);
+      setAccessEvents((prev) => [newEvent, ...prev.slice(0, 199)]);
     }, 8000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [employees, deviceList, setAccessEvents]);
 
-  const stats = {
-    totalToday: dashboardStats.totalAccessEvents,
-    granted: dashboardStats.grantedAccess,
-    denied: dashboardStats.deniedAccess,
-  };
+  const stats = useMemo(() => ({
+    totalToday: accessEvents.length,
+    granted: accessEvents.filter(e => e.status === 'granted').length,
+    denied: accessEvents.filter(e => e.status === 'denied').length,
+  }), [accessEvents]);
 
   const timeFormatter = useMemo(() => {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;

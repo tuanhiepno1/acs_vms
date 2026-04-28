@@ -29,11 +29,12 @@ import {
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { cn } from '../lib/utils';
+import { useLocalStorage } from '../lib/use-local-storage';
 import { branches as staticBranches } from '../data/staticData';
 import type { Branch } from '../types';
 
 export function Branches() {
-  const [branches, setBranches] = useState<Branch[]>(staticBranches);
+  const [branches, setBranches] = useLocalStorage<Branch[]>('acs_branches', staticBranches);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
