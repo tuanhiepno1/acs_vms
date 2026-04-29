@@ -19,6 +19,7 @@ import {
 import {
   Search, Edit, Trash2, UserPlus, ImagePlus,
   Download, Users, UserCheck, UserX, ShieldAlert,
+  Fingerprint, ScanFace, KeyRound,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalStorage } from '../lib/use-local-storage';
@@ -33,7 +34,7 @@ const fmt = (iso?: string) => {
   }).format(new Date(iso));
 };
 
-const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended' };
+const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended', authMethod: '' as 'face' | 'fingerprint' | 'passcode' | '', authData: '' };
 
 export function UserManagement() {
   const [list, setList] = useLocalStorage<Employee[]>('acs_employees', staticEmployees);
@@ -64,7 +65,7 @@ export function UserManagement() {
   };
 
   const openAdd = () => { setForm(emptyForm); setIsAddOpen(true); };
-  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity }); setEditTarget(e); };
+  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity, authMethod: e.authMethod || '', authData: e.authData || '' }); setEditTarget(e); };
 
   const handleAdd = () => {
     if (!form.name || !form.employeeNo) return;
@@ -73,9 +74,11 @@ export function UserManagement() {
       name: form.name,
       employeeNo: form.employeeNo,
       branch: form.branch || branchList[0]?.name || '',
-      image: form.image || undefined,
+      image: form.authMethod === 'face' ? (form.image || undefined) : undefined,
       validity: form.validity,
       registeredAt: new Date().toISOString(),
+      ...(form.authMethod ? { authMethod: form.authMethod } : {}),
+      ...(form.authMethod === 'passcode' && form.authData ? { authData: form.authData } : {}),
     };
     setList((prev) => [emp, ...prev]);
     setIsAddOpen(false);
@@ -85,7 +88,7 @@ export function UserManagement() {
   const handleEdit = () => {
     if (!editTarget || !form.name) return;
     setList((prev) => prev.map((e) =>
-      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.image || e.image, validity: form.validity } : e
+      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.authMethod === 'face' ? (form.image || e.image) : e.image, validity: form.validity, ...(form.authMethod ? { authMethod: form.authMethod } : {}), ...(form.authMethod === 'passcode' ? { authData: form.authData || e.authData } : {}) } : e
     ));
     setEditTarget(null);
     setForm(emptyForm);
@@ -108,19 +111,56 @@ export function UserManagement() {
   const formFields = (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label className="text-slate-200">Photo</Label>
-        <div className="flex items-center gap-4">
-          <Avatar className="size-16 border-2 border-slate-700">
-            <AvatarImage src={form.image} />
-            <AvatarFallback className="bg-slate-800 text-slate-400"><ImagePlus className="size-6" /></AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col gap-1">
-            <Button type="button" variant="outline" size="sm" className="border-slate-700 text-slate-200" onClick={() => fileInputRef.current?.click()}>Choose Image</Button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
-            <p className="text-slate-500 text-xs">JPG, PNG up to 2MB</p>
+        <Label className="text-slate-200">Authentication Method</Label>
+        <Select value={form.authMethod || 'placeholder'} onValueChange={(v) => setForm({ ...form, authMethod: v === 'placeholder' ? '' : v as 'face' | 'fingerprint' | 'passcode' })}>
+          <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select auth method" /></SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectItem value="placeholder" disabled className="text-slate-500">Select auth method</SelectItem>
+            <SelectItem value="face" className="text-white"><span className="flex items-center gap-2"><ScanFace className="size-4" />Face Scan</span></SelectItem>
+            <SelectItem value="fingerprint" className="text-white"><span className="flex items-center gap-2"><Fingerprint className="size-4" />Fingerprint</span></SelectItem>
+            <SelectItem value="passcode" className="text-white"><span className="flex items-center gap-2"><KeyRound className="size-4" />Passcode</span></SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {form.authMethod === 'face' && (
+        <div className="grid gap-2">
+          <Label className="text-slate-200">Photo</Label>
+          <div className="flex items-center gap-4">
+            <Avatar className="size-16 border-2 border-slate-700">
+              <AvatarImage src={form.image} />
+              <AvatarFallback className="bg-slate-800 text-slate-400"><ImagePlus className="size-6" /></AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-1">
+              <Button type="button" variant="outline" size="sm" className="border-slate-700 text-slate-200" onClick={() => fileInputRef.current?.click()}>Choose Image</Button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+              <p className="text-slate-500 text-xs">JPG, PNG up to 2MB</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {form.authMethod === 'fingerprint' && (
+        <div className="grid gap-2">
+          <Label className="text-slate-200">Fingerprint Registration</Label>
+          <div className="p-4 border border-dashed border-slate-600 rounded-lg bg-slate-800/50 text-center">
+            <Fingerprint className="size-8 mx-auto text-slate-400 mb-2" />
+            <p className="text-slate-300 text-sm">Place finger on scanner to register</p>
+            <Button type="button" variant="outline" size="sm" className="mt-3 border-slate-600 text-slate-200" onClick={() => alert('Fingerprint scan simulation')}>
+              Scan Fingerprint
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {form.authMethod === 'passcode' && (
+        <div className="grid gap-2">
+          <Label className="text-slate-200">Passcode</Label>
+          <Input value={form.authData} onChange={(e) => setForm({ ...form, authData: e.target.value })} type="password" placeholder="Enter 4-6 digit passcode" maxLength={6} className="bg-slate-800 border-slate-700 text-white" />
+          <p className="text-slate-500 text-xs">4-6 digits PIN code</p>
+        </div>
+      )}
+
       <div className="grid gap-2">
         <Label className="text-slate-200">Employee Name</Label>
         <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="John Doe" className="bg-slate-800 border-slate-700 text-white" />

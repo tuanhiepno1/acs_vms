@@ -1,184 +1,113 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { StatBar } from '../components/StatBar';
+import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import {
+  BarChart3,
+  Download,
+  Calendar,
+  TrendingUp,
+  Users,
   UserCheck,
   UserX,
   Activity,
-  TrendingUp,
-  AlertCircle,
-  Camera,
-  Building2,
-  RotateCcw,
+  AlertTriangle,
+  Wifi,
+  WifiOff,
+  ShieldCheck,
+  Clock,
+  MapPin,
+  Zap,
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { useLocalStorage } from '../lib/use-local-storage';
-import { employees as defaultEmployees, devices as defaultDevices, branches as defaultBranches } from '../data/staticData';
-import type { Employee, Device } from '../types';
-import { formatTimeAgo } from '../lib/date';
-import { FaceScanOverlay } from '../components/FaceScanOverlay';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { branches as staticBranches, users as staticUsers, dashboardStats, devices as staticDevices } from '../data/staticData';
 
-interface AccessEvent {
-  id: string;
-  userName: string;
-  deviceName: string;
-  branchName: string;
-  status: 'granted' | 'denied';
-  confidence?: number;
-  timestamp: Date;
-  reason?: string;
-  facePhotoUrl?: string;
-}
+const accessData = [
+  { name: 'Mon', granted: 240, denied: 15 },
+  { name: 'Tue', granted: 280, denied: 22 },
+  { name: 'Wed', granted: 250, denied: 18 },
+  { name: 'Thu', granted: 310, denied: 12 },
+  { name: 'Fri', granted: 290, denied: 20 },
+  { name: 'Sat', granted: 150, denied: 8 },
+  { name: 'Sun', granted: 80, denied: 5 },
+];
+
+const branchData = staticBranches.map(b => ({
+  name: b.name.replace(' Office', ''),
+  value: Math.floor(Math.random() * 300) + 100,
+}));
+
+const peakHoursData = [
+  { hour: '6 AM', count: 20 },
+  { hour: '7 AM', count: 45 },
+  { hour: '8 AM', count: 120 },
+  { hour: '9 AM', count: 85 },
+  { hour: '10 AM', count: 40 },
+  { hour: '11 AM', count: 30 },
+  { hour: '12 PM', count: 95 },
+  { hour: '1 PM', count: 75 },
+  { hour: '2 PM', count: 50 },
+  { hour: '3 PM', count: 35 },
+  { hour: '4 PM', count: 60 },
+  { hour: '5 PM', count: 110 },
+  { hour: '6 PM', count: 90 },
+];
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+const recentActivities = [
+  { id: 1, user: 'John Doe', action: 'Access Granted', location: 'Main Entrance', time: '2 min ago', status: 'success' },
+  { id: 2, user: 'Jane Smith', action: 'Access Denied', location: 'Server Room', time: '5 min ago', status: 'error' },
+  { id: 3, user: 'Mike Johnson', action: 'Access Granted', location: 'Main Entrance', time: '8 min ago', status: 'success' },
+  { id: 4, user: 'Sarah Wilson', action: 'Access Granted', location: 'Office B', time: '12 min ago', status: 'success' },
+  { id: 5, user: 'Tom Brown', action: 'Access Denied', location: 'Server Room', time: '15 min ago', status: 'error' },
+];
+
+const alerts = [
+  { id: 1, type: 'warning', message: 'Device #3 offline for 5 minutes', time: '5 min ago' },
+  { id: 2, type: 'error', message: 'Multiple failed access attempts at Server Room', time: '10 min ago' },
+  { id: 3, type: 'info', message: 'System backup completed successfully', time: '1 hour ago' },
+];
 
 export function Dashboard() {
-  const [employees] = useLocalStorage<Employee[]>('acs_employees', defaultEmployees);
-  const [deviceList] = useLocalStorage<Device[]>('acs_devices', defaultDevices);
-  const [branchList] = useLocalStorage('acs_branches', defaultBranches);
-
-  const [accessEvents, setAccessEvents] = useLocalStorage<AccessEvent[]>('acs_dashboard_events', []);
-
-  // Normalize timestamps — localStorage serialization turns Date objects into strings
-  const events = useMemo(
-    () =>
-      accessEvents.map((e) => ({
-        ...e,
-        timestamp: e.timestamp instanceof Date ? e.timestamp : new Date(e.timestamp),
-      })),
-    [accessEvents],
-  );
-
-  // Seed initial events from employee data if empty
-  useEffect(() => {
-    if (events.length > 0) return;
-    const seedEvents: AccessEvent[] = employees.slice(0, 10).map((emp, i) => ({
-      id: `seed-${i}`,
-      userName: emp.name,
-      deviceName: deviceList[i % deviceList.length]?.name ?? 'Unknown Device',
-      branchName: emp.branch,
-      status: emp.validity === 'valid' ? 'granted' as const : 'denied' as const,
-      confidence: emp.validity === 'valid' ? 0.88 + Math.random() * 0.11 : 0.15 + Math.random() * 0.35,
-      timestamp: new Date(Date.now() - (10 - i) * 60000),
-      facePhotoUrl: emp.image,
-      reason: emp.validity !== 'valid' ? `${emp.validity} validity` : undefined,
-    }));
-    setAccessEvents(seedEvents);
-  }, [events.length, employees, deviceList, setAccessEvents]);
-
-  const deviceSummary = useMemo(
-    () => ({
-      total: deviceList.length,
-      online: deviceList.filter(d => d.status === 'online').length,
-      warning: deviceList.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
-      offline: deviceList.filter(d => d.status === 'offline').length,
-    }),
-    [deviceList],
-  );
-
-  // Simulate live updates from actual employee/device data
-  useEffect(() => {
-    const validEmployees = employees.filter(e => e.validity === 'valid');
-    if (validEmployees.length === 0 || deviceList.length === 0) return;
-
-    const interval = setInterval(() => {
-      const emp = validEmployees[Math.floor(Math.random() * validEmployees.length)];
-      const device = deviceList[Math.floor(Math.random() * deviceList.length)];
-      const statuses: ('granted' | 'denied')[] = ['granted', 'granted', 'granted', 'denied'];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-
-      const newEvent: AccessEvent = {
-        id: Date.now().toString(),
-        userName: emp.name,
-        deviceName: device.name,
-        branchName: emp.branch,
-        status,
-        confidence: status === 'granted' ? 0.85 + Math.random() * 0.14 : 0.15 + Math.random() * 0.35,
-        timestamp: new Date(),
-        facePhotoUrl: emp.image,
-      };
-
-      setAccessEvents((prev) => [newEvent, ...prev.slice(0, 199)]);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, [employees, deviceList, setAccessEvents]);
-
-  const stats = useMemo(() => ({
-    totalToday: events.length,
-    granted: events.filter(e => e.status === 'granted').length,
-    denied: events.filter(e => e.status === 'denied').length,
-  }), [events]);
-
-  const timeFormatter = useMemo(() => {
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    const hour12 = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hour12 ?? false;
-    return new Intl.DateTimeFormat(locale, {
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12,
-    });
-  }, []);
-
-  const [selectedEventId, setSelectedEventId] = useState<string>(() => events[0]?.id ?? '');
-  const [detailsOpen, setDetailsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!selectedEventId && events[0]?.id) {
-      setSelectedEventId(events[0].id);
-    }
-  }, [events, selectedEventId]);
-
-  const selectedEvent = useMemo(
-    () => events.find((e) => e.id === selectedEventId) ?? events[0],
-    [events, selectedEventId],
-  );
-
-  const [selectedDateTime, setSelectedDateTime] = useState<string>('');
-  const [jumpTime, setJumpTime] = useState<string>('');
-  const todayIso = useMemo(() => {
-    const d = new Date();
-    // YYYY-MM-DD
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }, []);
-  const selectedDateValue = selectedDateTime || todayIso;
-
-  const timelineScrollRef = useRef<HTMLDivElement | null>(null);
-  const timelineItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const findClosestEventByLocalTime = (timeStr: string) => {
-    // "HH:MM" or "HH:MM:SS"
-    const match = timeStr.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
-    if (!match) return null;
-    const h = Number(match[1]);
-    const m = Number(match[2]);
-    const s = Number(match[3] ?? '0');
-    const target = h * 3600 + m * 60 + s;
-
-    let best: { id: string; diff: number } | null = null;
-    for (const e of events) {
-      const t = e.timestamp;
-      const seconds = t.getHours() * 3600 + t.getMinutes() * 60 + t.getSeconds();
-      const diff = Math.abs(seconds - target);
-      if (!best || diff < best.diff) {
-        best = { id: e.id, diff };
-      }
-    }
-    return best?.id ?? null;
+  const exportToCSV = () => {
+    const headers = ['Date,Granted,Denied,Total,Active Users'];
+    const rows = [
+      '2024-01-15,245,12,257,42',
+      '2024-01-16,238,15,253,40',
+      '2024-01-17,252,8,260,45',
+      '2024-01-18,220,18,238,38',
+      '2024-01-19,260,10,270,48',
+      '2024-01-20,235,14,249,41',
+      '2024-01-21,255,11,266,44',
+    ];
+    const csvContent = [headers, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `access_report_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
-  const scrollToEvent = (eventId: string) => {
-    const el = timelineItemRefs.current[eventId];
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  const stats = {
+    total: dashboardStats.totalAccessEvents,
+    granted: dashboardStats.grantedAccess,
+    denied: dashboardStats.deniedAccess,
+    activeUsers: staticUsers.length,
+  };
+
+  const deviceStatus = {
+    online: staticDevices.filter(d => d.status === 'online').length,
+    offline: staticDevices.filter(d => d.status === 'offline').length,
+    warning: staticDevices.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
+    total: staticDevices.length,
   };
 
   return (
@@ -186,260 +115,302 @@ export function Dashboard() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-white mb-0.5 text-xl font-bold">Dashboard</h1>
-          <p className="text-slate-400 text-sm">
-            Real-time access monitoring across all locations
-          </p>
+          <p className="text-slate-400 text-sm">Access control system overview and analytics</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Badge className="bg-slate-800 text-slate-100 hover:bg-slate-800">
-            Today: {todayIso}
-          </Badge>
-          <Input
-            type="date"
-            value={selectedDateValue}
-            onChange={(e) => setSelectedDateTime(e.target.value)}
-            className="picker-dark w-[190px] bg-slate-800 border-slate-600 text-slate-100 shadow-inner"
-          />
+        <div className="flex gap-2">
+          <Select defaultValue="week">
+            <SelectTrigger className="w-[150px] bg-slate-800 border-slate-700 text-white">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectItem value="today" className="text-white">Today</SelectItem>
+              <SelectItem value="week" className="text-white">This Week</SelectItem>
+              <SelectItem value="month" className="text-white">This Month</SelectItem>
+              <SelectItem value="year" className="text-white">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" className="gap-2 bg-white text-slate-800 hover:bg-slate-100 border-0">
+            <Calendar className="size-4" />
+            Custom
+          </Button>
+          <Button onClick={exportToCSV} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
+            <Download className="size-4" />
+            Export
+          </Button>
         </div>
       </div>
 
-      <StatBar items={[
-        { label: 'Total', value: stats.totalToday },
-        { label: 'Granted', value: stats.granted, color: 'green' },
-        { label: 'Denied', value: stats.denied, color: 'red' },
-        { label: 'Devices', value: `${deviceSummary.online}/${deviceSummary.total} online`, color: 'blue' },
-      ]} />
-
-      <div className="grid grid-cols-1 gap-4 flex-1 min-h-0">
-        {/* Live Access Events + Face Snapshot (paired rows) */}
-        <Card className="bg-slate-900 border-slate-800 flex flex-col min-h-0">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white">Live Activity</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Click an event to view image and details
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="size-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-green-500">Live</span>
-              </div>
-            </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Total Access</CardTitle>
+            <Activity className="size-3.5 text-slate-500" />
           </CardHeader>
-          <CardContent className="flex-1 min-h-0">
-            <div className="h-full min-h-0 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-slate-500 text-sm">
-                  Showing <span className="text-slate-300">{events.length}</span> events
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden sm:block text-slate-500 text-sm">
-                    Hover + mouse wheel to scroll
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-slate-400 text-sm">Jump to</div>
-                    <Input
-                      type="time"
-                      step={1}
-                      value={jumpTime}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setJumpTime(v);
-                        const id = findClosestEventByLocalTime(v);
-                        if (!id) return;
-                        setSelectedEventId(id);
-                        scrollToEvent(id);
-                      }}
-                      className="picker-dark w-[160px] bg-slate-800 border-slate-600 text-slate-100 tabular-nums shadow-inner"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setJumpTime('');
-                        if (timelineScrollRef.current) {
-                          timelineScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-                        }
-                      }}
-                      className="inline-flex items-center justify-center size-9 rounded-md border border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700"
-                      aria-label="Reset time"
-                      title="Reset time"
-                    >
-                      <RotateCcw className="size-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Horizontal timeline */}
-              <div className="relative flex-1 min-h-0">
-                <div className="absolute left-0 right-0 top-4 h-px bg-slate-800" />
-
-                <div
-                  ref={timelineScrollRef}
-                  className="hide-scrollbar h-full min-h-0 overflow-x-auto overflow-y-hidden pb-2"
-                  onWheel={(e) => {
-                    // Convert vertical wheel to horizontal scroll when hovering the timeline
-                    if (!timelineScrollRef.current) return;
-                    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-                    e.preventDefault();
-                    timelineScrollRef.current.scrollLeft += e.deltaY;
-                  }}
-                >
-                  <div className="min-w-max h-full flex items-stretch gap-4 pr-3">
-                    {events.map((event) => {
-                      const isSelected = event.id === selectedEventId;
-                      const statusDot =
-                        event.status === 'granted' ? 'bg-green-500' : 'bg-red-500';
-
-                      return (
-                        <div
-                          key={event.id}
-                          ref={(el) => {
-                            timelineItemRefs.current[event.id] = el;
-                          }}
-                          className="w-[320px] shrink-0 h-full flex flex-col"
-                        >
-                          {/* timeline dot */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <div
-                              className={cn(
-                                'size-2 rounded-full ring-4 ring-slate-900',
-                                statusDot,
-                              )}
-                            />
-                            <div className="text-slate-300 text-sm tabular-nums">
-                              {timeFormatter.format(event.timestamp)}
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedEventId(event.id);
-                              setDetailsOpen(true);
-                            }}
-                            className={cn(
-                              'flex-1 min-h-[308px] rounded-2xl border overflow-hidden bg-slate-950 cursor-pointer',
-                              isSelected ? 'border-blue-600/50 ring-1 ring-blue-600/20' : 'border-slate-800',
-                            )}
-                          >
-                            {event.facePhotoUrl ? (
-                              <FaceScanOverlay
-                                photoUrl={event.facePhotoUrl}
-                                name={event.userName}
-                                status={event.status}
-                                confidence={event.confidence}
-                                timestamp={timeFormatter.format(event.timestamp)}
-                                deviceName={event.deviceName}
-                                className="h-full w-full rounded-2xl"
-                              />
-                            ) : (
-                              <div className="h-full bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950 flex items-center justify-center">
-                                <div className="flex flex-col items-center text-slate-400">
-                                  <Camera className="size-7 mb-1" />
-                                  <div className="text-sm">No capture</div>
-                                </div>
-                              </div>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <CardContent className="px-3 pb-2 pt-0">
+            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.total.toLocaleString()}</div>
+            <p className="text-slate-500 flex items-center gap-1 mt-0.5 text-xs whitespace-nowrap overflow-hidden">
+              <TrendingUp className="size-3 text-green-500" />
+              <span className="text-green-500">+12.5%</span>
+              <span className="text-slate-600">from last week</span>
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Granted</CardTitle>
+            <UserCheck className="size-3.5 text-green-500" />
+          </CardHeader>
+          <CardContent className="px-3 pb-2 pt-0">
+            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.granted.toLocaleString()}</div>
+            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">{stats.total > 0 ? ((stats.granted / stats.total) * 100).toFixed(1) : 0}% of total</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Denied</CardTitle>
+            <UserX className="size-3.5 text-red-500" />
+          </CardHeader>
+          <CardContent className="px-3 pb-2 pt-0">
+            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.denied.toLocaleString()}</div>
+            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">{stats.total > 0 ? ((stats.denied / stats.total) * 100).toFixed(1) : 0}% of total</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Active Users</CardTitle>
+            <Users className="size-3.5 text-blue-500" />
+          </CardHeader>
+          <CardContent className="px-3 pb-2 pt-0">
+            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.activeUsers}</div>
+            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">This week</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Details popup */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-3xl bg-slate-900 border-slate-800">
-          <DialogHeader>
-            <DialogTitle className="text-white">Access Event Details</DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Review face snapshot and event metadata
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedEvent ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
-                {selectedEvent.facePhotoUrl ? (
-                  <FaceScanOverlay
-                    photoUrl={selectedEvent.facePhotoUrl}
-                    name={selectedEvent.userName}
-                    status={selectedEvent.status}
-                    confidence={selectedEvent.confidence}
-                    timestamp={timeFormatter.format(selectedEvent.timestamp)}
-                    deviceName={selectedEvent.deviceName}
-                    className="h-[420px] w-full"
+      {/* Charts and Activity */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Main Chart */}
+          <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">Daily Access Trends</CardTitle>
+              <CardDescription className="text-slate-400">Last 7 days statistics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={accessData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                    labelStyle={{ color: '#f1f5f9' }}
+                    itemStyle={{ color: '#cbd5e1' }}
                   />
-                ) : (
-                  <div className="h-[420px] bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950 flex items-center justify-center">
-                    <div className="flex flex-col items-center text-slate-400">
-                      <Camera className="size-10 mb-2" />
-                      <div className="text-sm">No capture</div>
+                  <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                  <Bar dataKey="granted" fill="#10b981" name="Granted" />
+                  <Bar dataKey="denied" fill="#ef4444" name="Denied" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Device Status */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">Device Status</CardTitle>
+              <CardDescription className="text-slate-400">System health overview</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <Wifi className="size-5 text-green-500" />
+                    <div>
+                      <p className="text-white font-medium">Online</p>
+                      <p className="text-slate-500 text-xs">Active devices</p>
                     </div>
                   </div>
-                )}
+                  <span className="text-2xl font-bold text-green-400">{deviceStatus.online}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <WifiOff className="size-5 text-red-500" />
+                    <div>
+                      <p className="text-white font-medium">Offline</p>
+                      <p className="text-slate-500 text-xs">Inactive devices</p>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-red-400">{deviceStatus.offline}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="size-5 text-yellow-500" />
+                    <div>
+                      <p className="text-white font-medium">Warning</p>
+                      <p className="text-slate-500 text-xs">Needs attention</p>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-yellow-400">{deviceStatus.warning}</span>
+                </div>
+                <div className="text-center pt-2 border-t border-slate-800">
+                  <p className="text-slate-400 text-sm">Total: <span className="text-white font-semibold">{deviceStatus.total}</span> devices</p>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Recent Activity */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">Recent Activity</CardTitle>
+              <CardDescription className="text-slate-400">Latest access events</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-white truncate">{selectedEvent.userName}</div>
-                  <Badge
-                    className={cn(
-                      selectedEvent.status === 'granted'
-                        ? 'bg-green-600 text-white hover:bg-green-600'
-                        : 'bg-red-600 text-white hover:bg-red-600'
-                    )}
-                  >
-                    {selectedEvent.status === 'granted' ? 'Granted' : 'Denied'}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 text-slate-300">
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
-                    <div className="text-slate-400">Time</div>
-                    <div className="tabular-nums text-slate-200">
-                      {timeFormatter.format(selectedEvent.timestamp)}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
-                    <div className="text-slate-400">Device</div>
-                    <div className="text-slate-200 truncate">{selectedEvent.deviceName}</div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
-                    <div className="text-slate-400">Branch</div>
-                    <div className="text-slate-200 truncate">{selectedEvent.branchName}</div>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-800 bg-slate-950 p-3">
-                    <div className="text-slate-400 mb-1">Relative time</div>
-                    <div className="text-slate-200">{formatTimeAgo(selectedEvent.timestamp)}</div>
-                  </div>
-
-                  {selectedEvent.reason ? (
-                    <div className="rounded-lg border border-red-900/40 bg-red-950/30 p-3 text-red-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <AlertCircle className="size-4 text-red-400" />
-                        <div className="text-red-300">Reason</div>
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className={`size-2 rounded-full ${activity.status === 'success' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <div>
+                        <p className="text-white text-sm font-medium">{activity.user}</p>
+                        <p className="text-slate-500 text-xs">{activity.action}</p>
                       </div>
-                      <div className="text-red-200">{selectedEvent.reason}</div>
                     </div>
-                  ) : null}
-                </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-xs">{activity.location}</p>
+                      <p className="text-slate-500 text-xs">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Alerts */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">System Alerts</CardTitle>
+              <CardDescription className="text-slate-400">Important notifications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <div key={alert.id} className={`p-3 rounded-lg border ${
+                    alert.type === 'error' ? 'bg-red-950/30 border-red-900/40' :
+                    alert.type === 'warning' ? 'bg-yellow-950/30 border-yellow-900/40' :
+                    'bg-blue-950/30 border-blue-900/40'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className={`size-4 mt-0.5 ${
+                        alert.type === 'error' ? 'text-red-400' :
+                        alert.type === 'warning' ? 'text-yellow-400' :
+                        'text-blue-400'
+                      }`} />
+                      <div className="flex-1">
+                        <p className={`text-sm ${
+                          alert.type === 'error' ? 'text-red-200' :
+                          alert.type === 'warning' ? 'text-yellow-200' :
+                          'text-blue-200'
+                        }`}>{alert.message}</p>
+                        <p className="text-slate-500 text-xs mt-1">{alert.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Distribution by Office */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">Distribution by Office</CardTitle>
+              <CardDescription className="text-slate-400">Access count by location</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={branchData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {branchData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                    itemStyle={{ color: '#cbd5e1' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Peak Hours */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white">Peak Hours</CardTitle>
+              <CardDescription className="text-slate-400">Access volume by hour</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={peakHoursData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="hour" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                    labelStyle={{ color: '#f1f5f9' }}
+                    itemStyle={{ color: '#cbd5e1' }}
+                  />
+                  <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                  <Line type="monotone" dataKey="count" stroke="#3b82f6" name="Access Count" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Top Users */}
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader>
+            <CardTitle className="text-white">Most Active Users</CardTitle>
+            <CardDescription className="text-slate-400">Top 5 users with most access attempts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {staticUsers.slice(0, 5).map((user, index) => (
+                <div key={user.id} className="flex items-center justify-between p-4 border border-slate-800 rounded-lg bg-slate-950">
+                  <div className="flex items-center gap-3">
+                    <div className="text-white font-bold">#{index + 1}</div>
+                    <div>
+                      <p className="text-white">{user.name}</p>
+                      <p className="text-slate-400">{user.role}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white">{Math.floor(Math.random() * 30) + 20} scans</p>
+                    <p className="text-slate-400">This week</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

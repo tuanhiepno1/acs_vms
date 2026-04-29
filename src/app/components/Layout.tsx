@@ -17,6 +17,9 @@ import {
   Clock,
   ArrowLeft,
   LogOut,
+  Users as UsersIcon,
+  Scale,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -42,14 +45,17 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const mainNav = [
-  { name: 'Dashboard', href: '/acs', icon: LayoutDashboard },
-  { name: 'Users', href: '/acs/users', icon: Users },
-  { name: 'Devices', href: '/acs/devices', icon: Camera },
-  { name: 'Logs', href: '/acs/logs', icon: FileText },
-  { name: 'Audit Log', href: '/acs/audit-log', icon: Shield },
-  { name: 'Offices', href: '/acs/branches', icon: Building2 },
-  { name: 'Reports', href: '/acs/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/acs/settings', icon: SettingsIcon },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Live Activity', href: '/live-activity', icon: Clock },
+  { name: 'Users', href: '/users', icon: Users },
+  { name: 'Groups', href: '/groups', icon: FolderOpen },
+  { name: 'Devices', href: '/devices', icon: Camera },
+  { name: 'Logs', href: '/logs', icon: FileText },
+  { name: 'Occupancy', href: '/occupancy', icon: UsersIcon },
+  { name: 'Audit Log', href: '/audit-log', icon: Shield },
+  { name: 'Rules & Policies', href: '/rules', icon: Scale },
+  { name: 'Offices', href: '/branches', icon: Building2 },
+  { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];
 
 export function Layout() {
@@ -113,21 +119,13 @@ export function Layout() {
               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center">
                 <ShieldCheck className="size-5 text-white" />
               </div>
-              <span className="text-white font-semibold tracking-tight">Access Control System</span>
+              <span className="text-white font-semibold tracking-tight">Tempus Core</span>
             </div>
             <button onClick={() => setSidebarOpen(false)}>
               <X className="size-6 text-slate-400" />
             </button>
           </div>
           <nav className="flex-1 mt-6 px-3 flex flex-col">
-            <Link
-              to="/"
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors text-sm"
-            >
-              <ArrowLeft className="size-4" />
-              Back to Hub
-            </Link>
             <div className="space-y-0.5">
               {mainNav.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -161,17 +159,10 @@ export function Layout() {
               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center">
                 <ShieldCheck className="size-5 text-white" />
               </div>
-              <span className="text-white font-semibold tracking-tight">Access Control System</span>
+              <span className="text-white font-semibold tracking-tight">Tempus Core</span>
             </div>
           </div>
           <nav className="flex-1 mt-6 px-3 flex flex-col">
-            <Link
-              to="/"
-              className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors text-sm"
-            >
-              <ArrowLeft className="size-4" />
-              Back to Hub
-            </Link>
             <div className="space-y-0.5">
               {mainNav.map((item) => {
                 const isActive = location.pathname === item.href;

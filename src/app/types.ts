@@ -8,6 +8,8 @@ export interface Employee {
   validity: 'valid' | 'expired' | 'suspended';
   lastAuthTime?: string;
   registeredAt: string;
+  authMethod?: 'face' | 'fingerprint' | 'passcode';
+  authData?: string;
 }
 
 // ── Legacy User type (kept for backward compat) ──────────────────
@@ -29,6 +31,8 @@ export interface Device {
   model: string;
   branch: string;
   location: string;
+  doorType: 'entry' | 'exit' | 'both';
+  doorStatus: 'locked' | 'unlocked';
   status: 'online' | 'offline' | 'maintenance' | 'warning';
   lastSeen: string;
   lastActivity: string;
