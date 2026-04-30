@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { StatBar } from '../components/StatBar';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -30,8 +31,10 @@ import {
 import {
   Switch,
 } from '../components/ui/switch';
-import { Search, Plus, Edit, Trash2, Shield, Clock, MapPin, Users, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Shield, Clock, MapPin, Users, AlertTriangle, CalendarClock, FolderOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useLocalStorage } from '../lib/use-local-storage';
+import type { TimeSchedule } from '../types';
 
 interface AccessRule {
   id: string;
@@ -41,6 +44,17 @@ interface AccessRule {
   enabled: boolean;
   priority: 'high' | 'medium' | 'low';
   createdAt: string;
+  // Link to schedule
+  scheduleId?: string;
+  // Link to groups
+  userGroupIds?: string[];
+  deviceGroupIds?: string[];
+}
+
+interface Group {
+  id: string;
+  name: string;
+  type: 'user' | 'device';
 }
 
 const mockRules: AccessRule[] = [
@@ -92,12 +106,36 @@ const mockRules: AccessRule[] = [
 ];
 
 export function Rules() {
-  const [rules, setRules] = useState<AccessRule[]>(mockRules);
+  const [rules, setRules] = useLocalStorage<AccessRule[]>('acs_rules', mockRules);
+  const [schedules] = useLocalStorage<TimeSchedule[]>('acs_schedules', []);
+  const [groups] = useLocalStorage<Group[]>('acs_groups', []);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<AccessRule | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AccessRule | null>(null);
+
+  // Form state
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    type: 'time' as AccessRule['type'],
+    priority: 'medium' as AccessRule['priority'],
+    scheduleId: '',
+    userGroupIds: [] as string[],
+    deviceGroupIds: [] as string[],
+  });
+
+  const resetForm = () => setForm({
+    name: '',
+    description: '',
+    type: 'time',
+    priority: 'medium',
+    scheduleId: '',
+    userGroupIds: [],
+    deviceGroupIds: [],
+  });
 
   const filtered = rules.filter((rule) => {
     const matchSearch = rule.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -110,11 +148,74 @@ export function Rules() {
   });
 
   const handleToggle = (id: string) => {
-    setRules(rules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+    setRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   };
 
-  const handleDelete = (id: string) => {
-    setRules(rules.filter(r => r.id !== id));
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    setRules(prev => prev.filter(r => r.id !== deleteTarget.id));
+    setDeleteTarget(null);
+  };
+
+  const openAdd = () => { resetForm(); setEditingRule(null); setIsAddOpen(true); };
+  const openEdit = (rule: AccessRule) => {
+    setForm({
+      name: rule.name,
+      description: rule.description,
+      type: rule.type,
+      priority: rule.priority,
+      scheduleId: rule.scheduleId || '',
+      userGroupIds: rule.userGroupIds || [],
+      deviceGroupIds: rule.deviceGroupIds || [],
+    });
+    setEditingRule(rule);
+  };
+
+  const handleAdd = () => {
+    if (!form.name) return;
+    const newRule: AccessRule = {
+      id: `RULE-${Date.now()}`,
+      name: form.name,
+      description: form.description,
+      type: form.type,
+      priority: form.priority,
+      enabled: true,
+      createdAt: new Date().toISOString().split('T')[0],
+      ...(form.scheduleId ? { scheduleId: form.scheduleId } : {}),
+      ...(form.userGroupIds.length > 0 ? { userGroupIds: form.userGroupIds } : {}),
+      ...(form.deviceGroupIds.length > 0 ? { deviceGroupIds: form.deviceGroupIds } : {}),
+    };
+    setRules(prev => [newRule, ...prev]);
+    setIsAddOpen(false);
+    resetForm();
+  };
+
+  const handleEdit = () => {
+    if (!editingRule || !form.name) return;
+    setRules(prev => prev.map(r =>
+      r.id === editingRule.id ? {
+        ...r,
+        name: form.name,
+        description: form.description,
+        type: form.type,
+        priority: form.priority,
+        scheduleId: form.scheduleId || undefined,
+        userGroupIds: form.userGroupIds,
+        deviceGroupIds: form.deviceGroupIds,
+      } : r
+    ));
+    setEditingRule(null);
+    resetForm();
+  };
+
+  const getScheduleName = (id?: string) => {
+    if (!id) return null;
+    return schedules.find(s => s.id === id)?.name;
+  };
+
+  const getGroupNames = (ids?: string[]) => {
+    if (!ids || ids.length === 0) return [];
+    return ids.map(id => groups.find(g => g.id === id)?.name).filter(Boolean);
   };
 
   const getTypeIcon = (type: string) => {
@@ -125,6 +226,14 @@ export function Rules() {
       case 'device': return <Shield className="size-4" />;
       default: return <AlertTriangle className="size-4" />;
     }
+  };
+
+  const stats = {
+    total: rules.length,
+    enabled: rules.filter(r => r.enabled).length,
+    high: rules.filter(r => r.priority === 'high').length,
+    linkedToSchedule: rules.filter(r => r.scheduleId).length,
+    linkedToGroups: rules.filter(r => (r.userGroupIds?.length || 0) + (r.deviceGroupIds?.length || 0) > 0).length,
   };
 
   const getPriorityColor = (priority: string) => {
@@ -143,11 +252,19 @@ export function Rules() {
           <h1 className="text-white mb-0.5 text-xl font-bold">Rules & Policies</h1>
           <p className="text-slate-400 text-sm">Manage access control rules and policies</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
+        <Button onClick={openAdd} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
           <Plus className="size-4" />
           Add Rule
         </Button>
       </div>
+
+      <StatBar items={[
+        { label: 'Total', value: stats.total },
+        { label: 'Enabled', value: stats.enabled, color: 'green' },
+        { label: 'High Priority', value: stats.high, color: 'red' },
+        { label: 'With Schedule', value: stats.linkedToSchedule, color: 'blue' },
+        { label: 'With Groups', value: stats.linkedToGroups, color: 'yellow' },
+      ]} />
 
       <Card className="bg-slate-900 border-slate-800 flex-1 min-h-0">
         <CardHeader>
@@ -183,10 +300,10 @@ export function Rules() {
                 <TableRow className="border-slate-800 bg-slate-800/40 hover:bg-slate-800/40">
                   <TableHead className="text-center text-slate-300 font-semibold">Rule Name</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Type</TableHead>
-                  <TableHead className="text-center text-slate-300 font-semibold">Description</TableHead>
+                  <TableHead className="text-center text-slate-300 font-semibold">Schedule</TableHead>
+                  <TableHead className="text-center text-slate-300 font-semibold">Groups</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Priority</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Status</TableHead>
-                  <TableHead className="text-center text-slate-300 font-semibold">Created</TableHead>
                   <TableHead className="text-center text-slate-300 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -200,7 +317,28 @@ export function Rules() {
                         <span className="capitalize">{rule.type}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-slate-400 text-sm max-w-xs truncate">{rule.description}</TableCell>
+                    <TableCell className="text-center">
+                      {getScheduleName(rule.scheduleId) ? (
+                        <Badge variant="outline" className="border-blue-600/50 bg-blue-600/15 text-blue-300 text-xs">
+                          <CalendarClock className="size-3 mr-1" />
+                          {getScheduleName(rule.scheduleId)}
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-600 text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {getGroupNames([...(rule.userGroupIds || []), ...(rule.deviceGroupIds || [])]).map((name, i) => (
+                          <Badge key={i} variant="outline" className="border-green-600/50 bg-green-600/15 text-green-300 text-xs">
+                            <FolderOpen className="size-3 mr-1" />{name}
+                          </Badge>
+                        ))}
+                        {(rule.userGroupIds?.length || 0) + (rule.deviceGroupIds?.length || 0) === 0 && (
+                          <span className="text-slate-600 text-xs">—</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge className={cn(getPriorityColor(rule.priority), 'text-white hover:opacity-80')}>
                         {rule.priority}
@@ -212,13 +350,12 @@ export function Rules() {
                         onCheckedChange={() => handleToggle(rule.id)}
                       />
                     </TableCell>
-                    <TableCell className="text-center text-slate-400 text-sm">{rule.createdAt}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setEditingRule(rule)}
+                          onClick={() => openEdit(rule)}
                           className="text-slate-400 hover:text-white"
                         >
                           <Edit className="size-4" />
@@ -226,7 +363,7 @@ export function Rules() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(rule.id)}
+                          onClick={() => setDeleteTarget(rule)}
                           className="text-slate-400 hover:text-red-400"
                         >
                           <Trash2 className="size-4" />
@@ -246,6 +383,7 @@ export function Rules() {
         if (!open) {
           setIsAddOpen(false);
           setEditingRule(null);
+          resetForm();
         }
       }}>
         <DialogContent className="bg-slate-900 border-slate-800">
@@ -258,18 +396,19 @@ export function Rules() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="grid gap-2">
               <Label className="text-slate-200">Rule Name</Label>
               <Input
                 placeholder="Enter rule name"
                 className="bg-slate-800 border-slate-700 text-white"
-                defaultValue={editingRule?.name}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
             <div className="grid gap-2">
               <Label className="text-slate-200">Rule Type</Label>
-              <Select defaultValue={editingRule?.type || 'time'}>
+              <Select value={form.type} onValueChange={(v: any) => setForm({ ...form, type: v })}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
@@ -286,12 +425,13 @@ export function Rules() {
               <Input
                 placeholder="Enter rule description"
                 className="bg-slate-800 border-slate-700 text-white"
-                defaultValue={editingRule?.description}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
             </div>
             <div className="grid gap-2">
               <Label className="text-slate-200">Priority</Label>
-              <Select defaultValue={editingRule?.priority || 'medium'}>
+              <Select value={form.priority} onValueChange={(v: any) => setForm({ ...form, priority: v })}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
@@ -302,6 +442,87 @@ export function Rules() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Schedule Selection */}
+            <div className="grid gap-2">
+              <Label className="text-slate-200 flex items-center gap-2">
+                <CalendarClock className="size-4" />
+                Time Schedule
+              </Label>
+              <Select value={form.scheduleId || '__none__'} onValueChange={(v) => setForm({ ...form, scheduleId: v === '__none__' ? '' : v })}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="Select a schedule (optional)" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="__none__" className="text-white">No Schedule</SelectItem>
+                  {schedules.map((s) => (
+                    <SelectItem key={s.id} value={s.id} className="text-white">{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* User Groups */}
+            <div className="grid gap-2">
+              <Label className="text-slate-200 flex items-center gap-2">
+                <Users className="size-4" />
+                User Groups
+              </Label>
+              <div className="flex flex-wrap gap-2 p-3 border border-slate-700 rounded-md bg-slate-800/50">
+                {groups.filter(g => g.type === 'user').length === 0 ? (
+                  <span className="text-slate-500 text-sm">No user groups available</span>
+                ) : (
+                  groups.filter(g => g.type === 'user').map(g => (
+                    <label key={g.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={form.userGroupIds.includes(g.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setForm({ ...form, userGroupIds: [...form.userGroupIds, g.id] });
+                          } else {
+                            setForm({ ...form, userGroupIds: form.userGroupIds.filter(id => id !== g.id) });
+                          }
+                        }}
+                        className="size-4 accent-blue-500"
+                      />
+                      <span className="text-slate-200 text-sm">{g.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Device Groups */}
+            <div className="grid gap-2">
+              <Label className="text-slate-200 flex items-center gap-2">
+                <Shield className="size-4" />
+                Device Groups
+              </Label>
+              <div className="flex flex-wrap gap-2 p-3 border border-slate-700 rounded-md bg-slate-800/50">
+                {groups.filter(g => g.type === 'device').length === 0 ? (
+                  <span className="text-slate-500 text-sm">No device groups available</span>
+                ) : (
+                  groups.filter(g => g.type === 'device').map(g => (
+                    <label key={g.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={form.deviceGroupIds.includes(g.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setForm({ ...form, deviceGroupIds: [...form.deviceGroupIds, g.id] });
+                          } else {
+                            setForm({ ...form, deviceGroupIds: form.deviceGroupIds.filter(id => id !== g.id) });
+                          }
+                        }}
+                        className="size-4 accent-blue-500"
+                      />
+                      <span className="text-slate-200 text-sm">{g.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -310,20 +531,35 @@ export function Rules() {
               onClick={() => {
                 setIsAddOpen(false);
                 setEditingRule(null);
+                resetForm();
               }}
               className="border-slate-700 text-slate-200"
             >
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                setIsAddOpen(false);
-                setEditingRule(null);
-              }}
+              onClick={editingRule ? handleEdit : handleAdd}
+              disabled={!form.name}
               className="bg-white text-slate-800 hover:bg-slate-100"
             >
               {editingRule ? 'Update Rule' : 'Add Rule'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Rule</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Are you sure you want to delete <span className="text-white font-medium">{deleteTarget?.name}</span>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

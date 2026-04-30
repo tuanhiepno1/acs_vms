@@ -14,6 +14,7 @@ import { LiveActivity } from "./pages/LiveActivity";
 import { Occupancy } from "./pages/Occupancy";
 import { Rules } from "./pages/Rules";
 import { Groups } from "./pages/Groups";
+import { Schedules } from "./pages/Schedules";
 import { NotFound } from "./pages/NotFound";
 import { ComingSoon } from "./pages/ComingSoon";
 import Login from "./pages/Login";
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: "live-activity", Component: LiveActivity },
       { path: "occupancy", Component: Occupancy },
       { path: "rules", Component: Rules },
+      { path: "schedules", Component: Schedules },
       { path: "branches", Component: Branches },
       { path: "reports", Component: Reports },
       { path: "settings", Component: Settings },

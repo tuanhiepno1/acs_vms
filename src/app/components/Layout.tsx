@@ -20,6 +20,7 @@ import {
   Users as UsersIcon,
   Scale,
   FolderOpen,
+  CalendarClock,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -46,7 +47,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const mainNav = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Live Activity', href: '/live-activity', icon: Clock },
+  { name: 'Real-Time Events', href: '/live-activity', icon: Clock },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Groups', href: '/groups', icon: FolderOpen },
   { name: 'Devices', href: '/devices', icon: Camera },
@@ -54,6 +55,7 @@ const mainNav = [
   { name: 'Occupancy', href: '/occupancy', icon: UsersIcon },
   { name: 'Audit Log', href: '/audit-log', icon: Shield },
   { name: 'Rules & Policies', href: '/rules', icon: Scale },
+  { name: 'Schedules', href: '/schedules', icon: CalendarClock },
   { name: 'Offices', href: '/branches', icon: Building2 },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];

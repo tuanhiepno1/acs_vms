@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -47,6 +47,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useLocalStorage } from '../lib/use-local-storage';
 
 interface GroupMember {
   id: string;
@@ -169,7 +170,7 @@ const availableRules = [
 ];
 
 export function Groups() {
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
+  const [groups, setGroups] = useLocalStorage<Group[]>('acs_groups', mockGroups);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -204,7 +205,7 @@ export function Groups() {
           <h1 className="text-white mb-0.5 text-xl font-bold">Groups</h1>
           <p className="text-slate-400 text-sm">Manage user groups and device groups</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
+        <Button onClick={() => { setEditingGroup(null); setIsAddOpen(true); }} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
           <Plus className="size-4" />
           Add Group
         </Button>

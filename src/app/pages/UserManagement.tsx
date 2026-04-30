@@ -19,11 +19,17 @@ import {
 import {
   Search, Edit, Trash2, UserPlus, ImagePlus,
   Download, Users, UserCheck, UserX, ShieldAlert,
-  Fingerprint, ScanFace, KeyRound,
+  Fingerprint, ScanFace, KeyRound, FolderOpen,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalStorage } from '../lib/use-local-storage';
 import { employees as staticEmployees, branches as defaultBranches } from '../data/staticData';
+
+interface Group {
+  id: string;
+  name: string;
+  type: 'user' | 'device';
+}
 import type { Employee } from '../types';
 
 const fmt = (iso?: string) => {
@@ -34,11 +40,12 @@ const fmt = (iso?: string) => {
   }).format(new Date(iso));
 };
 
-const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended', authMethod: '' as 'face' | 'fingerprint' | 'passcode' | '', authData: '' };
+const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended', authMethod: '' as 'face' | 'fingerprint' | 'passcode' | '', authData: '', groupIds: [] as string[] };
 
 export function UserManagement() {
   const [list, setList] = useLocalStorage<Employee[]>('acs_employees', staticEmployees);
   const [branchList] = useLocalStorage('acs_branches', defaultBranches);
+  const [groups] = useLocalStorage<Group[]>('acs_groups', []);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValidity, setFilterValidity] = useState('all');
   const [filterBranch, setFilterBranch] = useState('all');
@@ -65,7 +72,7 @@ export function UserManagement() {
   };
 
   const openAdd = () => { setForm(emptyForm); setIsAddOpen(true); };
-  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity, authMethod: e.authMethod || '', authData: e.authData || '' }); setEditTarget(e); };
+  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity, authMethod: e.authMethod || '', authData: e.authData || '', groupIds: e.groupIds || [] }); setEditTarget(e); };
 
   const handleAdd = () => {
     if (!form.name || !form.employeeNo) return;
@@ -79,6 +86,7 @@ export function UserManagement() {
       registeredAt: new Date().toISOString(),
       ...(form.authMethod ? { authMethod: form.authMethod } : {}),
       ...(form.authMethod === 'passcode' && form.authData ? { authData: form.authData } : {}),
+      ...(form.groupIds.length > 0 ? { groupIds: form.groupIds } : {}),
     };
     setList((prev) => [emp, ...prev]);
     setIsAddOpen(false);
@@ -88,7 +96,7 @@ export function UserManagement() {
   const handleEdit = () => {
     if (!editTarget || !form.name) return;
     setList((prev) => prev.map((e) =>
-      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.authMethod === 'face' ? (form.image || e.image) : e.image, validity: form.validity, ...(form.authMethod ? { authMethod: form.authMethod } : {}), ...(form.authMethod === 'passcode' ? { authData: form.authData || e.authData } : {}) } : e
+      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.authMethod === 'face' ? (form.image || e.image) : e.image, validity: form.validity, ...(form.authMethod ? { authMethod: form.authMethod } : {}), ...(form.authMethod === 'passcode' ? { authData: form.authData || e.authData } : {}), groupIds: form.groupIds } : e
     ));
     setEditTarget(null);
     setForm(emptyForm);
@@ -181,6 +189,32 @@ export function UserManagement() {
         </Select>
       </div>
       <div className="grid gap-2">
+        <Label className="text-slate-200">Groups</Label>
+        <div className="flex flex-wrap gap-2 p-3 border border-slate-700 rounded-md bg-slate-800/50">
+          {groups.filter(g => g.type === 'user').length === 0 ? (
+            <span className="text-slate-500 text-sm">No user groups available</span>
+          ) : (
+            groups.filter(g => g.type === 'user').map(g => (
+              <label key={g.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.groupIds.includes(g.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setForm({ ...form, groupIds: [...form.groupIds, g.id] });
+                    } else {
+                      setForm({ ...form, groupIds: form.groupIds.filter(id => id !== g.id) });
+                    }
+                  }}
+                  className="size-4 accent-blue-500"
+                />
+                <span className="text-slate-200 text-sm">{g.name}</span>
+              </label>
+            ))
+          )}
+        </div>
+      </div>
+      <div className="grid gap-2">
         <Label className="text-slate-200">Validity</Label>
         <Select value={form.validity} onValueChange={(v) => setForm({ ...form, validity: v as 'valid' | 'expired' | 'suspended' })}>
           <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select validity" /></SelectTrigger>
@@ -265,6 +299,7 @@ export function UserManagement() {
                     <TableHead className="text-center text-slate-300 font-semibold">Employee No</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Branch</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Validity</TableHead>
+                    <TableHead className="text-center text-slate-300 font-semibold">Groups</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Last Auth</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Registered</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Actions</TableHead>
@@ -290,6 +325,22 @@ export function UserManagement() {
                         )}>
                           {emp.validity.charAt(0).toUpperCase() + emp.validity.slice(1)}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {emp.groupIds && emp.groupIds.length > 0 ? (
+                            emp.groupIds.map(gid => {
+                              const group = groups.find(g => g.id === gid);
+                              return group ? (
+                                <Badge key={gid} variant="outline" className="border-blue-600/50 bg-blue-600/15 text-blue-300 text-xs">
+                                  <FolderOpen className="size-3 mr-1" />{group.name}
+                                </Badge>
+                              ) : null;
+                            })
+                          ) : (
+                            <span className="text-slate-600 text-xs">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.lastAuthTime)}</TableCell>
                       <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.registeredAt)}</TableCell>

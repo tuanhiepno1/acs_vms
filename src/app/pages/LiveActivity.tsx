@@ -181,7 +181,7 @@ export function LiveActivity() {
     <div className="h-full overflow-hidden flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-white mb-0.5 text-xl font-bold">Live Activity</h1>
+          <h1 className="text-white mb-0.5 text-xl font-bold">Real-Time Events</h1>
           <p className="text-slate-400 text-sm">
             Real-time access monitoring across all locations
           </p>

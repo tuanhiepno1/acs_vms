@@ -10,6 +10,7 @@ export interface Employee {
   registeredAt: string;
   authMethod?: 'face' | 'fingerprint' | 'passcode';
   authData?: string;
+  groupIds?: string[];
 }
 
 // ── Legacy User type (kept for backward compat) ──────────────────
@@ -33,12 +34,13 @@ export interface Device {
   location: string;
   doorType: 'entry' | 'exit' | 'both';
   doorStatus: 'locked' | 'unlocked';
-  status: 'online' | 'offline' | 'maintenance' | 'warning';
+  status: 'online' | 'offline' | 'maintenance' | 'warning' | 'disconnected';
   lastSeen: string;
   lastActivity: string;
   ipAddress: string;
   firmwareVersion: string;
   todayCount: number;
+  groupIds?: string[];
 }
 
 // ── Branches ─────────────────────────────────────────────────────
@@ -132,6 +134,25 @@ export interface OccupancyLog {
   firstEntry?: string;
   lastExit?: string;
   totalHours: number;
+}
+
+// ── Time Schedules for Access Control ──────────────────────────
+export interface TimeSchedule {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'daily' | 'weekly' | 'holiday';
+  enabled: boolean;
+  // Time ranges for each day (0-6 = Sun-Sat)
+  timeRanges: {
+    day: number; // 0-6
+    startTime: string; // HH:mm format
+    endTime: string; // HH:mm format
+    enabled: boolean;
+  }[];
+  // For holiday type
+  holidayDates?: string[]; // YYYY-MM-DD format
+  createdAt: string;
 }
 
 // ── Accounts (platform login) ────────────────────────────────────

@@ -3,7 +3,7 @@ import { cn } from '../lib/utils';
 export interface StatItem {
   label: string;
   value: string | number;
-  color?: 'default' | 'green' | 'red' | 'yellow' | 'blue' | 'purple';
+  color?: 'default' | 'green' | 'red' | 'yellow' | 'blue' | 'purple' | 'gray' | 'orange';
 }
 
 const dotColor: Record<string, string> = {
@@ -13,6 +13,8 @@ const dotColor: Record<string, string> = {
   yellow: 'bg-yellow-500',
   blue: 'bg-blue-500',
   purple: 'bg-purple-500',
+  gray: 'bg-gray-500',
+  orange: 'bg-orange-500',
 };
 
 const valueColor: Record<string, string> = {
@@ -22,6 +24,8 @@ const valueColor: Record<string, string> = {
   yellow: 'text-yellow-400',
   blue: 'text-blue-400',
   purple: 'text-purple-400',
+  gray: 'text-gray-400',
+  orange: 'text-orange-400',
 };
 
 export function StatBar({ items }: { items: StatItem[] }) {
