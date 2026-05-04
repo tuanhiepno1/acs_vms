@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { StatBar } from '../components/StatBar';
 import { Button } from '../components/ui/button';
@@ -16,10 +17,10 @@ import { Label } from '../components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '../components/ui/select';
-import {
-  Search, Edit, Trash2, UserPlus, ImagePlus,
+import { Search, Edit, Trash2, UserPlus, ImagePlus,
   Download, Users, UserCheck, UserX, ShieldAlert,
   Fingerprint, ScanFace, KeyRound, FolderOpen,
+  User, Briefcase, HardHat, CalendarDays,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalStorage } from '../lib/use-local-storage';
@@ -40,7 +41,7 @@ const fmt = (iso?: string) => {
   }).format(new Date(iso));
 };
 
-const emptyForm = { name: '', employeeNo: '', branch: '', image: '', validity: 'valid' as 'valid' | 'expired' | 'suspended', authMethod: '' as 'face' | 'fingerprint' | 'passcode' | '', authData: '', groupIds: [] as string[] };
+const emptyForm = { name: '', employeeNo: '', branch: '', image: '', role: 'employee' as 'employee' | 'visitor' | 'contractor', validFrom: new Date().toISOString().split('T')[0], validUntil: '', validity: 'valid' as 'valid' | 'expired' | 'suspended', authMethod: '' as 'face' | 'fingerprint' | 'passcode' | '', authData: '', groupIds: [] as string[] };
 
 export function UserManagement() {
   const [list, setList] = useLocalStorage<Employee[]>('acs_employees', staticEmployees);
@@ -51,10 +52,10 @@ export function UserManagement() {
   const [filterBranch, setFilterBranch] = useState('all');
 
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Employee | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [form, setForm] = useState(emptyForm);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const filtered = list.filter((e) => {
     const q = searchQuery.toLowerCase();
@@ -72,17 +73,29 @@ export function UserManagement() {
   };
 
   const openAdd = () => { setForm(emptyForm); setIsAddOpen(true); };
-  const openEdit = (e: Employee) => { setForm({ name: e.name, employeeNo: e.employeeNo, branch: e.branch, image: e.image || '', validity: e.validity, authMethod: e.authMethod || '', authData: e.authData || '', groupIds: e.groupIds || [] }); setEditTarget(e); };
+
+  const computeValidity = (from?: string, until?: string): 'valid' | 'expired' | 'suspended' => {
+    const now = new Date();
+    const start = from ? new Date(from) : null;
+    const end = until ? new Date(until) : null;
+    if (start && now < start) return 'suspended';
+    if (end && now > end) return 'expired';
+    return 'valid';
+  };
 
   const handleAdd = () => {
     if (!form.name || !form.employeeNo) return;
+    const validity = computeValidity(form.validFrom, form.validUntil);
     const emp: Employee = {
       id: `EMP-${Date.now()}`,
       name: form.name,
       employeeNo: form.employeeNo,
       branch: form.branch || branchList[0]?.name || '',
       image: form.authMethod === 'face' ? (form.image || undefined) : undefined,
-      validity: form.validity,
+      role: form.role,
+      validity,
+      validFrom: form.validFrom,
+      validUntil: form.validUntil || undefined,
       registeredAt: new Date().toISOString(),
       ...(form.authMethod ? { authMethod: form.authMethod } : {}),
       ...(form.authMethod === 'passcode' && form.authData ? { authData: form.authData } : {}),
@@ -90,15 +103,6 @@ export function UserManagement() {
     };
     setList((prev) => [emp, ...prev]);
     setIsAddOpen(false);
-    setForm(emptyForm);
-  };
-
-  const handleEdit = () => {
-    if (!editTarget || !form.name) return;
-    setList((prev) => prev.map((e) =>
-      e.id === editTarget.id ? { ...e, name: form.name, employeeNo: form.employeeNo || e.employeeNo, branch: form.branch || e.branch, image: form.authMethod === 'face' ? (form.image || e.image) : e.image, validity: form.validity, ...(form.authMethod ? { authMethod: form.authMethod } : {}), ...(form.authMethod === 'passcode' ? { authData: form.authData || e.authData } : {}), groupIds: form.groupIds } : e
-    ));
-    setEditTarget(null);
     setForm(emptyForm);
   };
 
@@ -170,12 +174,23 @@ export function UserManagement() {
       )}
 
       <div className="grid gap-2">
-        <Label className="text-slate-200">Employee Name</Label>
+        <Label className="text-slate-200">User Name</Label>
         <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="John Doe" className="bg-slate-800 border-slate-700 text-white" />
       </div>
       <div className="grid gap-2">
-        <Label className="text-slate-200">Employee No</Label>
-        <Input value={form.employeeNo} onChange={(e) => setForm({ ...form, employeeNo: e.target.value })} placeholder="E011" className="bg-slate-800 border-slate-700 text-white" />
+        <Label className="text-slate-200">User No</Label>
+        <Input value={form.employeeNo} onChange={(e) => setForm({ ...form, employeeNo: e.target.value })} placeholder="U011" className="bg-slate-800 border-slate-700 text-white" />
+      </div>
+      <div className="grid gap-2">
+        <Label className="text-slate-200">Role</Label>
+        <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as 'employee' | 'visitor' | 'contractor' })}>
+          <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select role" /></SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectItem value="employee" className="text-white"><span className="flex items-center gap-2"><Briefcase className="size-4" />Employee</span></SelectItem>
+            <SelectItem value="visitor" className="text-white"><span className="flex items-center gap-2"><User className="size-4" />Visitor</span></SelectItem>
+            <SelectItem value="contractor" className="text-white"><span className="flex items-center gap-2"><HardHat className="size-4" />Contractor</span></SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="grid gap-2">
         <Label className="text-slate-200">Branch</Label>
@@ -214,17 +229,17 @@ export function UserManagement() {
           )}
         </div>
       </div>
-      <div className="grid gap-2">
-        <Label className="text-slate-200">Validity</Label>
-        <Select value={form.validity} onValueChange={(v) => setForm({ ...form, validity: v as 'valid' | 'expired' | 'suspended' })}>
-          <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select validity" /></SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="valid" className="text-white">Valid</SelectItem>
-            <SelectItem value="expired" className="text-white">Expired</SelectItem>
-            <SelectItem value="suspended" className="text-white">Suspended</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-2">
+          <Label className="text-slate-200">Valid From</Label>
+          <Input type="date" value={form.validFrom} onChange={(e) => setForm({ ...form, validFrom: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+        </div>
+        <div className="grid gap-2">
+          <Label className="text-slate-200">Valid Until</Label>
+          <Input type="date" value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+        </div>
       </div>
+      <p className="text-slate-500 text-xs">Leave "Valid Until" empty for permanent access. System will auto-check validity based on date range.</p>
     </div>
   );
 
@@ -233,7 +248,7 @@ export function UserManagement() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-white mb-0.5 text-xl font-bold">User Management</h1>
-          <p className="text-slate-400 text-sm">Manage employee registration and access validity</p>
+          <p className="text-slate-400 text-sm">Manage user registration, roles, and access validity</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2 bg-white text-slate-800 hover:bg-slate-100 border-0">
@@ -260,14 +275,14 @@ export function UserManagement() {
           <CardHeader>
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div>
-                <CardTitle className="text-white">Employee List</CardTitle>
-                <CardDescription className="text-slate-400">Showing {filtered.length} employees</CardDescription>
+                <CardTitle className="text-white">User List</CardTitle>
+                <CardDescription className="text-slate-400">Showing {filtered.length} users</CardDescription>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-500" />
-                <Input placeholder="Search name, employee no, branch..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-slate-800 border-slate-700 text-white" />
+                <Input placeholder="Search name, user no, branch..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-slate-800 border-slate-700 text-white" />
               </div>
               <Select value={filterValidity} onValueChange={setFilterValidity}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Validity" /></SelectTrigger>
@@ -295,13 +310,13 @@ export function UserManagement() {
                 <TableHeader>
                   <TableRow className="border-slate-800 bg-slate-800/40 hover:bg-slate-800/40">
                     <TableHead className="text-center text-slate-300 font-semibold">Photo</TableHead>
-                    <TableHead className="text-center text-slate-300 font-semibold">Employee</TableHead>
-                    <TableHead className="text-center text-slate-300 font-semibold">Employee No</TableHead>
+                    <TableHead className="text-center text-slate-300 font-semibold">User</TableHead>
+                    <TableHead className="text-center text-slate-300 font-semibold">User No</TableHead>
+                    <TableHead className="text-center text-slate-300 font-semibold">Role</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Branch</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Validity</TableHead>
+                    <TableHead className="text-center text-slate-300 font-semibold">Valid Period</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Groups</TableHead>
-                    <TableHead className="text-center text-slate-300 font-semibold">Last Auth</TableHead>
-                    <TableHead className="text-center text-slate-300 font-semibold">Registered</TableHead>
                     <TableHead className="text-center text-slate-300 font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -316,6 +331,15 @@ export function UserManagement() {
                       </TableCell>
                       <TableCell className="text-center text-white font-medium">{emp.name}</TableCell>
                       <TableCell className="text-center text-slate-400 font-mono">{emp.employeeNo}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={cn(
+                          emp.role === 'employee' && 'border-blue-600 bg-blue-600/20 text-blue-400',
+                          emp.role === 'visitor' && 'border-purple-600 bg-purple-600/20 text-purple-400',
+                          emp.role === 'contractor' && 'border-orange-600 bg-orange-600/20 text-orange-400',
+                        )}>
+                          {emp.role.charAt(0).toUpperCase() + emp.role.slice(1)}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-center text-slate-400">{emp.branch}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className={cn(
@@ -325,6 +349,15 @@ export function UserManagement() {
                         )}>
                           {emp.validity.charAt(0).toUpperCase() + emp.validity.slice(1)}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center text-slate-400 text-xs">
+                        {emp.validFrom && emp.validUntil ? (
+                          <span>{emp.validFrom} → {emp.validUntil}</span>
+                        ) : emp.validFrom ? (
+                          <span>From {emp.validFrom}</span>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-wrap gap-1 justify-center">
@@ -342,11 +375,9 @@ export function UserManagement() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.lastAuthTime)}</TableCell>
-                      <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.registeredAt)}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} className="text-slate-400 hover:text-blue-400">
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/users/${emp.id}`)} className="text-slate-400 hover:text-blue-400">
                             <Edit className="size-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(emp)} className="text-slate-400 hover:text-red-400">
@@ -367,28 +398,13 @@ export function UserManagement() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle className="text-white">Add New Employee</DialogTitle>
-            <DialogDescription className="text-slate-400">Register a new employee for face access</DialogDescription>
+            <DialogTitle className="text-white">Add New User</DialogTitle>
+            <DialogDescription className="text-slate-400">Register a new user for access control</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button variant="secondary" onClick={() => setIsAddOpen(false)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
-            <Button onClick={handleAdd} disabled={!form.name || !form.employeeNo} className="bg-white text-slate-800 hover:bg-slate-100">Register</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="bg-slate-900 border-slate-800">
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Employee</DialogTitle>
-            <DialogDescription className="text-slate-400">Update employee information</DialogDescription>
-          </DialogHeader>
-          {formFields}
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setEditTarget(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
-            <Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button>
+            <Button onClick={handleAdd} disabled={!form.name || !form.employeeNo} className="bg-white text-slate-800 hover:bg-slate-100">Add User</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -397,7 +413,7 @@ export function UserManagement() {
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <DialogContent className="bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle className="text-white">Delete Employee</DialogTitle>
+            <DialogTitle className="text-white">Delete User</DialogTitle>
             <DialogDescription className="text-slate-400">
               Are you sure you want to delete <span className="text-white font-medium">{deleteTarget?.name}</span>? This action cannot be undone.
             </DialogDescription>

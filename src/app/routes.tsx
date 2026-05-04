@@ -17,6 +17,9 @@ import { Events } from "./pages/Events";
 import { System } from "./pages/System";
 import { NotFound } from "./pages/NotFound";
 import { DoorControl } from "./pages/DoorControl";
+import { UserDetail } from "./pages/UserDetail";
+import { GroupDetail } from "./pages/GroupDetail";
+import { DeviceDetail } from "./pages/DeviceDetail";
 import Login from "./pages/Login";
 
 export const router = createBrowserRouter([
@@ -33,8 +36,10 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: "real-time-events", Component: RealTimeEvents },
       { path: "users", Component: UserManagement },
+      { path: "users/:id", Component: UserDetail },
       // Group section
       { path: "groups", Component: Groups },
+      { path: "groups/:id", Component: GroupDetail },
       { path: "groups/user", Component: Groups },
       { path: "groups/device", Component: Groups },
       { path: "groups/ta", Component: Groups },
@@ -42,6 +47,7 @@ export const router = createBrowserRouter([
       { path: "schedules", Component: Schedules },
       // Device section
       { path: "devices", Component: Devices },
+      { path: "devices/:id", Component: DeviceDetail },
       { path: "emergency-control", Component: Devices },
       // Door section
       { path: "doors", Component: DoorControl },

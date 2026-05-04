@@ -9,30 +9,22 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import {
-  BarChart3,
   Download,
-  Calendar,
-  TrendingUp,
   Users,
-  UserCheck,
-  UserX,
-  Activity,
   AlertTriangle,
   Wifi,
   WifiOff,
   ShieldCheck,
   Clock,
-  MapPin,
-  Zap,
-  Unlock,
-  UserPlus,
-  Bell,
   Radio,
   Eye,
   X,
+  Camera,
+  DoorOpen,
+  Building2,
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { branches as staticBranches, users as staticUsers, dashboardStats, devices as staticDevices } from '../data/staticData';
+import { branches as staticBranches, users as staticUsers, employees as staticEmployees, dashboardStats, devices as staticDevices, doors as staticDoors } from '../data/staticData';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
@@ -43,15 +35,52 @@ import {
   DialogDescription,
 } from '../components/ui/dialog';
 
-const accessData = [
-  { name: 'Mon', granted: 240, denied: 15 },
-  { name: 'Tue', granted: 280, denied: 22 },
-  { name: 'Wed', granted: 250, denied: 18 },
-  { name: 'Thu', granted: 310, denied: 12 },
-  { name: 'Fri', granted: 290, denied: 20 },
-  { name: 'Sat', granted: 150, denied: 8 },
-  { name: 'Sun', granted: 80, denied: 5 },
-];
+const accessDataSets: Record<string, { name: string; granted: number; denied: number }[]> = {
+  today: [
+    { name: '6 AM', granted: 20, denied: 1 },
+    { name: '7 AM', granted: 45, denied: 2 },
+    { name: '8 AM', granted: 120, denied: 5 },
+    { name: '9 AM', granted: 85, denied: 3 },
+    { name: '10 AM', granted: 40, denied: 2 },
+    { name: '11 AM', granted: 30, denied: 1 },
+    { name: '12 PM', granted: 95, denied: 4 },
+    { name: '1 PM', granted: 75, denied: 3 },
+    { name: '2 PM', granted: 50, denied: 2 },
+    { name: '3 PM', granted: 35, denied: 1 },
+    { name: '4 PM', granted: 60, denied: 2 },
+    { name: '5 PM', granted: 110, denied: 4 },
+    { name: '6 PM', granted: 90, denied: 3 },
+  ],
+  week: [
+    { name: 'Mon', granted: 240, denied: 15 },
+    { name: 'Tue', granted: 280, denied: 22 },
+    { name: 'Wed', granted: 250, denied: 18 },
+    { name: 'Thu', granted: 310, denied: 12 },
+    { name: 'Fri', granted: 290, denied: 20 },
+    { name: 'Sat', granted: 150, denied: 8 },
+    { name: 'Sun', granted: 80, denied: 5 },
+  ],
+  month: [
+    { name: 'Week 1', granted: 1200, denied: 85 },
+    { name: 'Week 2', granted: 1350, denied: 72 },
+    { name: 'Week 3', granted: 1100, denied: 95 },
+    { name: 'Week 4', granted: 1450, denied: 68 },
+  ],
+  year: [
+    { name: 'Jan', granted: 5200, denied: 320 },
+    { name: 'Feb', granted: 4800, denied: 280 },
+    { name: 'Mar', granted: 6100, denied: 350 },
+    { name: 'Apr', granted: 5900, denied: 310 },
+    { name: 'May', granted: 5500, denied: 290 },
+    { name: 'Jun', granted: 6300, denied: 380 },
+    { name: 'Jul', granted: 5800, denied: 340 },
+    { name: 'Aug', granted: 6000, denied: 360 },
+    { name: 'Sep', granted: 5400, denied: 300 },
+    { name: 'Oct', granted: 5700, denied: 330 },
+    { name: 'Nov', granted: 6200, denied: 370 },
+    { name: 'Dec', granted: 5100, denied: 310 },
+  ],
+};
 
 const branchData = staticBranches.map(b => ({
   name: b.name.replace(' Office', ''),
@@ -95,6 +124,8 @@ export function Dashboard() {
   
   // Drill-down dialog state
   const [chartDetail, setChartDetail] = useState<{type: string, open: boolean}>({type: '', open: false});
+  const [period, setPeriod] = useState('week');
+  const accessData = accessDataSets[period];
 
   const exportToCSV = () => {
     const headers = ['Date,Granted,Denied,Total,Active Users'];
@@ -116,11 +147,11 @@ export function Dashboard() {
     URL.revokeObjectURL(link.href);
   };
 
-  const stats = {
-    total: dashboardStats.totalAccessEvents,
-    granted: dashboardStats.grantedAccess,
-    denied: dashboardStats.deniedAccess,
-    activeUsers: staticUsers.length,
+  const summaryStats = {
+    totalUsers: staticEmployees.length,
+    totalDevices: staticDevices.length,
+    totalDoors: staticDoors.length,
+    totalBranches: staticBranches.length,
   };
 
   const deviceStatus = {
@@ -128,6 +159,13 @@ export function Dashboard() {
     offline: staticDevices.filter(d => d.status === 'offline').length,
     warning: staticDevices.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
     total: staticDevices.length,
+  };
+
+  const userStatus = {
+    valid: staticEmployees.filter(e => e.validity === 'valid').length,
+    expired: staticEmployees.filter(e => e.validity === 'expired').length,
+    suspended: staticEmployees.filter(e => e.validity === 'suspended').length,
+    total: staticEmployees.length,
   };
 
   return (
@@ -138,7 +176,7 @@ export function Dashboard() {
           <p className="text-slate-400 text-sm">Access control system overview and analytics</p>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="week">
+          <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[150px] bg-slate-800 border-slate-700 text-white">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
@@ -156,151 +194,152 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Total Access</CardTitle>
-            <Activity className="size-3.5 text-slate-500" />
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.total.toLocaleString()}</div>
-            <p className="text-slate-500 flex items-center gap-1 mt-0.5 text-xs whitespace-nowrap overflow-hidden">
-              <TrendingUp className="size-3 text-green-500" />
-              <span className="text-green-500">+12.5%</span>
-              <span className="text-slate-600">from last week</span>
-            </p>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Users className="size-6 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm font-medium">Total Users</p>
+              <p className="text-white text-2xl font-bold">{summaryStats.totalUsers}</p>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Granted</CardTitle>
-            <UserCheck className="size-3.5 text-green-500" />
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.granted.toLocaleString()}</div>
-            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">{stats.total > 0 ? ((stats.granted / stats.total) * 100).toFixed(1) : 0}% of total</p>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+              <Camera className="size-6 text-green-500" />
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm font-medium">Total Devices</p>
+              <p className="text-white text-2xl font-bold">{summaryStats.totalDevices}</p>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Denied</CardTitle>
-            <UserX className="size-3.5 text-red-500" />
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.denied.toLocaleString()}</div>
-            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">{stats.total > 0 ? ((stats.denied / stats.total) * 100).toFixed(1) : 0}% of total</p>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <DoorOpen className="size-6 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm font-medium">Total Doors</p>
+              <p className="text-white text-2xl font-bold">{summaryStats.totalDoors}</p>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="px-3 py-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-slate-100 text-sm font-bold whitespace-nowrap">Active Users</CardTitle>
-            <Users className="size-3.5 text-blue-500" />
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <div className="text-white text-2xl font-semibold leading-7 whitespace-nowrap">{stats.activeUsers}</div>
-            <p className="text-slate-500 mt-0.5 text-xs whitespace-nowrap overflow-hidden">This week</p>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+              <Building2 className="size-6 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm font-medium">Total Branches</p>
+              <p className="text-white text-2xl font-bold">{summaryStats.totalBranches}</p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts and Activity */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Main Chart */}
-          <Card 
-            className="lg:col-span-2 bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
-            onClick={() => setChartDetail({type: 'access', open: true})}
-          >
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-white">Daily Access Trends</CardTitle>
-                <CardDescription className="text-slate-400">Last 7 days statistics</CardDescription>
-              </div>
-              <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={accessData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="name" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                    labelStyle={{ color: '#f1f5f9' }}
-                    itemStyle={{ color: '#cbd5e1' }}
-                  />
-                  <Legend wrapperStyle={{ color: '#cbd5e1' }} />
-                  <Bar dataKey="granted" fill="#10b981" name="Granted" />
-                  <Bar dataKey="denied" fill="#ef4444" name="Denied" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* Daily Access Trends */}
+        <Card
+          className="bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
+          onClick={() => setChartDetail({type: 'access', open: true})}
+        >
+          <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
+            <div>
+              <CardTitle className="text-white text-base">Daily Access Trends</CardTitle>
+              <CardDescription className="text-slate-400 text-xs">
+                {period === 'today' ? 'Today hourly statistics' : period === 'week' ? 'Last 7 days statistics' : period === 'month' ? 'This month weekly statistics' : 'This year monthly statistics'}
+              </CardDescription>
+            </div>
+            <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={accessData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="name" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                  labelStyle={{ color: '#f1f5f9' }}
+                  itemStyle={{ color: '#cbd5e1' }}
+                />
+                <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                <Bar dataKey="granted" fill="#10b981" name="Granted" />
+                <Bar dataKey="denied" fill="#ef4444" name="Denied" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          {/* Device Status */}
+        {/* User Status + Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* User Status */}
           <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">Device Status</CardTitle>
-              <CardDescription className="text-slate-400">System health overview</CardDescription>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-white text-base">User Status</CardTitle>
+              <CardDescription className="text-slate-400 text-xs">Employee validity overview</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-4 pb-4">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
                   <div className="flex items-center gap-3">
-                    <Wifi className="size-5 text-green-500" />
+                    <ShieldCheck className="size-5 text-green-500" />
                     <div>
-                      <p className="text-white font-medium">Online</p>
-                      <p className="text-slate-500 text-xs">Active devices</p>
+                      <p className="text-white font-medium text-sm">Valid</p>
+                      <p className="text-slate-500 text-xs">Active employees</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-green-400">{deviceStatus.online}</span>
+                  <span className="text-2xl font-bold text-green-400">{userStatus.valid}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
                   <div className="flex items-center gap-3">
-                    <WifiOff className="size-5 text-red-500" />
+                    <Clock className="size-5 text-yellow-500" />
                     <div>
-                      <p className="text-white font-medium">Offline</p>
-                      <p className="text-slate-500 text-xs">Inactive devices</p>
+                      <p className="text-white font-medium text-sm">Expired</p>
+                      <p className="text-slate-500 text-xs">Expired access</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-red-400">{deviceStatus.offline}</span>
+                  <span className="text-2xl font-bold text-yellow-400">{userStatus.expired}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
                   <div className="flex items-center gap-3">
-                    <AlertTriangle className="size-5 text-yellow-500" />
+                    <AlertTriangle className="size-5 text-red-500" />
                     <div>
-                      <p className="text-white font-medium">Warning</p>
-                      <p className="text-slate-500 text-xs">Needs attention</p>
+                      <p className="text-white font-medium text-sm">Suspended</p>
+                      <p className="text-slate-500 text-xs">Restricted access</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-yellow-400">{deviceStatus.warning}</span>
+                  <span className="text-2xl font-bold text-red-400">{userStatus.suspended}</span>
                 </div>
                 <div className="text-center pt-2 border-t border-slate-800">
-                  <p className="text-slate-400 text-sm">Total: <span className="text-white font-semibold">{deviceStatus.total}</span> devices</p>
+                  <p className="text-slate-400 text-sm">Total: <span className="text-white font-semibold">{userStatus.total}</span> employees</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent Activity */}
           <Card className="bg-slate-900 border-slate-800">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-white">Recent Activity</CardTitle>
+                  <CardTitle className="text-white text-base">Recent Activity</CardTitle>
                   {/* LIVE Badge */}
                   <Badge className="bg-red-600/20 text-red-400 border-red-600/30 animate-pulse">
                     <Radio className="size-3 mr-1" />
                     LIVE
                   </Badge>
                 </div>
-                <CardDescription className="text-slate-400">Latest access events</CardDescription>
+                <CardDescription className="text-slate-400 text-xs">Latest access events</CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               <div className="space-y-3">
                 {recentActivities.map((activity) => (
                   <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
@@ -320,14 +359,62 @@ export function Dashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Device Status + System Alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Device Status */}
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-white text-base">Device Status</CardTitle>
+              <CardDescription className="text-slate-400 text-xs">System health overview</CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <Wifi className="size-5 text-green-500" />
+                    <div>
+                      <p className="text-white font-medium text-sm">Online</p>
+                      <p className="text-slate-500 text-xs">Active devices</p>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-green-400">{deviceStatus.online}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <WifiOff className="size-5 text-red-500" />
+                    <div>
+                      <p className="text-white font-medium text-sm">Offline</p>
+                      <p className="text-slate-500 text-xs">Inactive devices</p>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-red-400">{deviceStatus.offline}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="size-5 text-yellow-500" />
+                    <div>
+                      <p className="text-white font-medium text-sm">Warning</p>
+                      <p className="text-slate-500 text-xs">Needs attention</p>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-yellow-400">{deviceStatus.warning}</span>
+                </div>
+                <div className="text-center pt-2 border-t border-slate-800">
+                  <p className="text-slate-400 text-sm">Total: <span className="text-white font-semibold">{deviceStatus.total}</span> devices</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Alerts */}
           <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">System Alerts</CardTitle>
-              <CardDescription className="text-slate-400">Important notifications</CardDescription>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-white text-base">System Alerts</CardTitle>
+              <CardDescription className="text-slate-400 text-xs">Important notifications</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               <div className="space-y-3">
                 {alerts.map((alert) => (
                   <div key={alert.id} className={`p-3 rounded-lg border ${
@@ -363,14 +450,14 @@ export function Dashboard() {
             className="bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
             onClick={() => setChartDetail({type: 'distribution', open: true})}
           >
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
               <div>
-                <CardTitle className="text-white">Distribution by Office</CardTitle>
-                <CardDescription className="text-slate-400">Access count by location</CardDescription>
+                <CardTitle className="text-white text-base">Distribution by Office</CardTitle>
+                <CardDescription className="text-slate-400 text-xs">Access count by location</CardDescription>
               </div>
               <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
@@ -401,14 +488,14 @@ export function Dashboard() {
             className="bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
             onClick={() => setChartDetail({type: 'peak', open: true})}
           >
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
               <div>
-                <CardTitle className="text-white">Peak Hours</CardTitle>
-                <CardDescription className="text-slate-400">Access volume by hour</CardDescription>
+                <CardTitle className="text-white text-base">Peak Hours</CardTitle>
+                <CardDescription className="text-slate-400 text-xs">Access volume by hour</CardDescription>
               </div>
               <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={peakHoursData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -429,24 +516,24 @@ export function Dashboard() {
 
         {/* Top Users */}
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-white">Most Active Users</CardTitle>
-            <CardDescription className="text-slate-400">Top 5 users with most access attempts</CardDescription>
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-white text-base">Most Active Users</CardTitle>
+            <CardDescription className="text-slate-400 text-xs">Top 5 users with most access attempts</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="px-4 pb-4">
+            <div className="space-y-3">
               {staticUsers.slice(0, 5).map((user, index) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border border-slate-800 rounded-lg bg-slate-950">
+                <div key={user.id} className="flex items-center justify-between p-3 border border-slate-800 rounded-lg bg-slate-950">
                   <div className="flex items-center gap-3">
-                    <div className="text-white font-bold">#{index + 1}</div>
+                    <div className="text-white font-bold text-sm">#{index + 1}</div>
                     <div>
-                      <p className="text-white">{user.name}</p>
-                      <p className="text-slate-400">{user.role}</p>
+                      <p className="text-white text-sm font-medium">{user.name}</p>
+                      <p className="text-slate-400 text-xs">{user.role}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-white">{Math.floor(Math.random() * 30) + 20} scans</p>
-                    <p className="text-slate-400">This week</p>
+                    <p className="text-white text-sm font-medium">{Math.floor(Math.random() * 30) + 20} scans</p>
+                    <p className="text-slate-400 text-xs">This week</p>
                   </div>
                 </div>
               ))}

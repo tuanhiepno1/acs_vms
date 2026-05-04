@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { StatBar } from '../components/StatBar';
 import { Button } from '../components/ui/button';
@@ -51,6 +52,7 @@ interface Group {
 import { formatTimeAgo } from '../lib/date';
 
 export function Devices() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('devices');
   const [devices, setDevices] = useLocalStorage<Device[]>('acs_devices', staticDevices);
   const [branchList] = useLocalStorage('acs_branches', defaultBranches);
@@ -59,24 +61,16 @@ export function Devices() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterBranch, setFilterBranch] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editDevice, setEditDevice] = useState<Device | null>(null);
   const [deleteDevice, setDeleteDevice] = useState<Device | null>(null);
-  const [viewDevice, setViewDevice] = useState<Device | null>(null);
   const [form, setForm] = useState({ name: '', branch: '', location: '', model: '', doorType: 'both' as 'entry' | 'exit' | 'both', doorStatus: 'locked' as 'locked' | 'unlocked', ipAddress: '', groupIds: [] as string[] });
 
   const resetForm = () => setForm({ name: '', branch: '', location: '', model: '', doorType: 'both', doorStatus: 'locked', ipAddress: '', groupIds: [] });
   const openAdd = () => { resetForm(); setIsAddDialogOpen(true); };
-  const openEdit = (d: Device) => { setForm({ name: d.name, branch: d.branch, location: d.location, model: d.model, doorType: d.doorType || 'both', doorStatus: d.doorStatus || 'locked', ipAddress: d.ipAddress, groupIds: d.groupIds || [] }); setEditDevice(d); };
 
   const handleAdd = () => {
     if (!form.name) return;
     setDevices(prev => [{ id: Date.now().toString(), name: form.name, branch: form.branch || 'Headquarters', location: form.location, doorType: form.doorType, doorStatus: form.doorStatus, status: 'online' as const, lastSeen: new Date().toISOString(), lastActivity: new Date().toISOString(), ipAddress: form.ipAddress, firmwareVersion: 'v2.1.0', todayCount: 0, model: form.model || 'FaceID Pro X1', ...(form.groupIds.length > 0 ? { groupIds: form.groupIds } : {}) }, ...prev]);
     setIsAddDialogOpen(false); resetForm();
-  };
-  const handleEdit = () => {
-    if (!editDevice || !form.name) return;
-    setDevices(prev => prev.map(d => d.id === editDevice.id ? { ...d, name: form.name, branch: form.branch || d.branch, location: form.location, model: form.model || d.model, doorType: form.doorType, doorStatus: form.doorStatus, ipAddress: form.ipAddress, groupIds: form.groupIds } : d));
-    setEditDevice(null); resetForm();
   };
   const handleDelete = () => {
     if (!deleteDevice) return;
@@ -205,14 +199,13 @@ export function Devices() {
                     <TableCell className="text-center">
                       <div
                         className={cn(
-                          'size-10 rounded-lg flex items-center justify-center mx-auto cursor-pointer',
+                          'size-10 rounded-lg flex items-center justify-center mx-auto',
                           device.status === 'online' && 'bg-green-600/20',
                           device.status === 'offline' && 'bg-red-600/20',
                           device.status === 'warning' && 'bg-yellow-600/20',
                           device.status === 'disconnected' && 'bg-gray-600/20',
                           device.status === 'maintenance' && 'bg-orange-600/20'
                         )}
-                        onClick={() => setViewDevice(device)}
                       >
                         <Camera
                           className={cn(
@@ -227,9 +220,9 @@ export function Devices() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <button onClick={() => setViewDevice(device)} className="text-white font-medium hover:text-blue-400 hover:underline cursor-pointer">
+                      <span className="text-white font-medium">
                         {device.name}
-                      </button>
+                      </span>
                     </TableCell>
                     <TableCell className="text-center text-slate-400">{device.location}</TableCell>
                     <TableCell className="text-center">
@@ -265,7 +258,7 @@ export function Devices() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(device)} className="text-slate-400 hover:text-blue-400">
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/devices/${device.id}`)} className="text-slate-400 hover:text-blue-400">
                           <Edit className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(device)} className="text-slate-400 hover:text-red-400">
@@ -350,37 +343,6 @@ export function Devices() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editDevice} onOpenChange={open => { if (!open) setEditDevice(null); }}>
-        <DialogContent className="bg-slate-900 border-slate-800">
-          <DialogHeader><DialogTitle className="text-white">Edit Device</DialogTitle><DialogDescription className="text-slate-400">Update device information</DialogDescription></DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2"><Label className="text-slate-200">Device Name</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Office</Label><Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{branchList.map(branch => <SelectItem key={branch.id} value={branch.name} className="text-white">{branch.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Location</Label><Input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Model</Label><Select value={form.model} onValueChange={v => setForm({...form, model: v})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="FaceID Pro X1" className="text-white">FaceID Pro X1</SelectItem><SelectItem value="FaceID Pro X2" className="text-white">FaceID Pro X2</SelectItem><SelectItem value="FaceID Standard" className="text-white">FaceID Standard</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-2"><Label className="text-slate-200">IP Address</Label><Input value={form.ipAddress} onChange={e => setForm({...form, ipAddress: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div className="grid gap-2"><Label className="text-slate-200">Door Status</Label><Select value={form.doorStatus} onValueChange={v => setForm({...form, doorStatus: v as 'locked' | 'unlocked'})}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="locked" className="text-white">Locked</SelectItem><SelectItem value="unlocked" className="text-white">Unlocked</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-2">
-              <Label className="text-slate-200">Groups</Label>
-              <div className="flex flex-wrap gap-2 p-3 border border-slate-700 rounded-md bg-slate-800/50">
-                {groups.filter(g => g.type === 'device').length === 0 ? (
-                  <span className="text-slate-500 text-sm">No device groups available</span>
-                ) : (
-                  groups.filter(g => g.type === 'device').map(g => (
-                    <label key={g.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700">
-                      <input type="checkbox" checked={form.groupIds.includes(g.id)} onChange={(e) => { if (e.target.checked) { setForm({ ...form, groupIds: [...form.groupIds, g.id] }); } else { setForm({ ...form, groupIds: form.groupIds.filter(id => id !== g.id) }); } }} className="size-4 accent-blue-500" />
-                      <span className="text-slate-200 text-sm">{g.name}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-          <DialogFooter><Button variant="secondary" onClick={() => setEditDevice(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Delete Confirmation */}
       <Dialog open={!!deleteDevice} onOpenChange={open => { if (!open) setDeleteDevice(null); }}>
         <DialogContent className="bg-slate-900 border-slate-800">
@@ -389,131 +351,6 @@ export function Devices() {
         </DialogContent>
       </Dialog>
 
-      {/* View Device Detail */}
-      <Dialog open={!!viewDevice} onOpenChange={open => { if (!open) setViewDevice(null); }}>
-        <DialogContent className="bg-slate-900 border-slate-800 max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Camera className="size-5" />
-              {viewDevice?.name}
-            </DialogTitle>
-            <DialogDescription className="text-slate-400">Device details and door control</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Model</Label>
-                <p className="text-white font-medium">{viewDevice?.model}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Office</Label>
-                <p className="text-white font-medium">{viewDevice?.branch}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Location</Label>
-                <p className="text-white font-medium">{viewDevice?.location}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">IP Address</Label>
-                <p className="text-white font-medium">{viewDevice?.ipAddress}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Door Type</Label>
-                <p className="text-white font-medium capitalize">{viewDevice?.doorType}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Status</Label>
-                <Badge variant="outline" className={cn(
-                  viewDevice?.status === 'online' && 'border-green-600 bg-green-600/20 text-green-400',
-                  viewDevice?.status === 'offline' && 'border-red-600 bg-red-600/20 text-red-400',
-                  viewDevice?.status === 'warning' && 'border-yellow-600 bg-yellow-600/20 text-yellow-400',
-                  viewDevice?.status === 'disconnected' && 'border-gray-600 bg-gray-600/20 text-gray-400',
-                  viewDevice?.status === 'maintenance' && 'border-orange-600 bg-orange-600/20 text-orange-400'
-                )}>
-                  {viewDevice?.status}
-                </Badge>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Last Activity</Label>
-                <p className="text-white font-medium">{viewDevice ? formatTimeAgo(viewDevice.lastActivity) : '-'}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg">
-                <Label className="text-slate-500 text-xs">Today Scans</Label>
-                <p className="text-white font-medium">{viewDevice?.todayCount || 0} scans</p>
-              </div>
-            </div>
-
-            {/* Door Lock Control */}
-            <div className="border border-slate-700 rounded-lg p-4 bg-slate-800/30">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <Label className="text-slate-200 text-base flex items-center gap-2">
-                    <DoorOpen className="size-4" />
-                    Door Control
-                  </Label>
-                  <p className="text-slate-400 text-sm mt-1">
-                    Current status: <span className={cn(
-                      'font-medium',
-                      viewDevice?.doorStatus === 'locked' ? 'text-red-400' : 'text-green-400'
-                    )}>{viewDevice?.doorStatus === 'locked' ? 'Locked' : 'Unlocked'}</span>
-                  </p>
-                </div>
-                <div className={cn(
-                  'size-12 rounded-full flex items-center justify-center',
-                  viewDevice?.doorStatus === 'locked' ? 'bg-red-600/20' : 'bg-green-600/20'
-                )}>
-                  {viewDevice?.doorStatus === 'locked' ? (
-                    <Lock className="size-6 text-red-500" />
-                  ) : (
-                    <Unlock className="size-6 text-green-500" />
-                  )}
-                </div>
-              </div>
-              <Button
-                onClick={() => {
-                  if (viewDevice) {
-                    setDevices(prev => prev.map(d => d.id === viewDevice.id ? { ...d, doorStatus: d.doorStatus === 'locked' ? 'unlocked' : 'locked' } : d));
-                    setViewDevice({ ...viewDevice, doorStatus: viewDevice.doorStatus === 'locked' ? 'unlocked' : 'locked' });
-                  }
-                }}
-                className={cn(
-                  'w-full gap-2',
-                  viewDevice?.doorStatus === 'locked'
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
-                )}
-              >
-                {viewDevice?.doorStatus === 'locked' ? (
-                  <><Unlock className="size-4" /> Unlock Door</>
-                ) : (
-                  <><Lock className="size-4" /> Lock Door</>
-                )}
-              </Button>
-            </div>
-
-            {/* Groups */}
-            {viewDevice?.groupIds && viewDevice.groupIds.length > 0 && (
-              <div>
-                <Label className="text-slate-500 text-xs mb-2 block">Groups</Label>
-                <div className="flex flex-wrap gap-1">
-                  {viewDevice.groupIds.map(gid => {
-                    const group = groups.find(g => g.id === gid);
-                    return group ? (
-                      <Badge key={gid} variant="outline" className="border-green-600/50 bg-green-600/15 text-green-300 text-xs">
-                        <FolderOpen className="size-3 mr-1" />{group.name}
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewDevice(null)} className="border-slate-700 text-slate-200">Close</Button>
-            <Button onClick={() => { setViewDevice(null); if (viewDevice) openEdit(viewDevice); }} className="bg-white text-slate-800 hover:bg-slate-100">Edit Device</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -226,14 +227,13 @@ interface GroupListCardProps {
   groups: Group[];
   search: string;
   setSearch: (s: string) => void;
-  setEditingGroup: (g: Group | null) => void;
-  setViewingGroup: (g: Group | null) => void;
   handleDelete: (id: string) => void;
   getTypeIcon: (type: string) => React.ReactNode;
   getTypeLabel: (type: string) => string;
 }
 
-function GroupListCard({ groups, search, setSearch, setEditingGroup, setViewingGroup, handleDelete, getTypeIcon, getTypeLabel }: GroupListCardProps) {
+function GroupListCard({ groups, search, setSearch, handleDelete, getTypeIcon, getTypeLabel }: GroupListCardProps) {
+  const navigate = useNavigate();
   const filtered = groups.filter((group) =>
     group.name.toLowerCase().includes(search.toLowerCase()) ||
     group.description.toLowerCase().includes(search.toLowerCase())
@@ -268,7 +268,7 @@ function GroupListCard({ groups, search, setSearch, setEditingGroup, setViewingG
                 <TableRow key={group.id} className="border-slate-800 hover:bg-slate-800/50">
                   <TableCell className="text-center">
                     <button
-                      onClick={() => setViewingGroup(group)}
+                      onClick={() => navigate(`/groups/${group.id}`)}
                       className="text-white text-sm font-medium hover:text-blue-400 hover:underline"
                     >
                       {group.name}
@@ -315,7 +315,7 @@ function GroupListCard({ groups, search, setSearch, setEditingGroup, setViewingG
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingGroup(group)}
+                        onClick={() => navigate(`/groups/${group.id}`)}
                         className="text-slate-400 hover:text-blue-400"
                       >
                         <Edit className="size-4" />
@@ -344,8 +344,6 @@ export function Groups() {
   const [groups, setGroups] = useLocalStorage<Group[]>('acs_groups', mockGroups);
   const [search, setSearch] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const [viewingGroup, setViewingGroup] = useState<Group | null>(null);
   const [activeTab, setActiveTab] = useState('user');
 
   const handleDelete = (id: string) => {
@@ -379,7 +377,7 @@ export function Groups() {
           <h1 className="text-white mb-0.5 text-xl font-bold">Groups</h1>
           <p className="text-slate-400 text-sm">Manage user groups and device groups</p>
         </div>
-        <Button onClick={() => { setEditingGroup(null); setIsAddOpen(true); }} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
           <Plus className="size-4" />
           Add Group
         </Button>
@@ -400,8 +398,6 @@ export function Groups() {
             groups={groups.filter(g => g.type === 'user')}
             search={search}
             setSearch={setSearch}
-            setEditingGroup={setEditingGroup}
-            setViewingGroup={setViewingGroup}
             handleDelete={handleDelete}
             getTypeIcon={getTypeIcon}
             getTypeLabel={getTypeLabel}
@@ -414,8 +410,6 @@ export function Groups() {
             groups={groups.filter(g => g.type === 'device')}
             search={search}
             setSearch={setSearch}
-            setEditingGroup={setEditingGroup}
-            setViewingGroup={setViewingGroup}
             handleDelete={handleDelete}
             getTypeIcon={getTypeIcon}
             getTypeLabel={getTypeLabel}
@@ -428,8 +422,6 @@ export function Groups() {
             groups={groups.filter(g => g.type === 'ta')}
             search={search}
             setSearch={setSearch}
-            setEditingGroup={setEditingGroup}
-            setViewingGroup={setViewingGroup}
             handleDelete={handleDelete}
             getTypeIcon={getTypeIcon}
             getTypeLabel={getTypeLabel}
@@ -442,8 +434,6 @@ export function Groups() {
             groups={groups.filter(g => g.type === 'access')}
             search={search}
             setSearch={setSearch}
-            setEditingGroup={setEditingGroup}
-            setViewingGroup={setViewingGroup}
             handleDelete={handleDelete}
             getTypeIcon={getTypeIcon}
             getTypeLabel={getTypeLabel}
@@ -471,21 +461,12 @@ export function Groups() {
         </TabsContent>
       </Tabs>
 
-      {/* Add/Edit Group Dialog */}
-      <Dialog open={isAddOpen || !!editingGroup} onOpenChange={(open) => {
-        if (!open) {
-          setIsAddOpen(false);
-          setEditingGroup(null);
-        }
-      }}>
+      {/* Add Group Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-2xl bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingGroup ? 'Edit Group' : 'Add New Group'}
-            </DialogTitle>
-            <DialogDescription className="text-slate-400">
-              {editingGroup ? 'Update group details and members' : 'Create a new user or device group'}
-            </DialogDescription>
+            <DialogTitle className="text-white">Add New Group</DialogTitle>
+            <DialogDescription className="text-slate-400">Create a new user or device group</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -494,12 +475,11 @@ export function Groups() {
               <Input
                 placeholder="Enter group name"
                 className="bg-slate-800 border-slate-700 text-white"
-                defaultValue={editingGroup?.name}
               />
             </div>
             <div className="grid gap-2">
               <Label className="text-slate-200">Group Type</Label>
-              <Select defaultValue={editingGroup?.type || 'user'}>
+              <Select defaultValue="user">
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
@@ -514,7 +494,6 @@ export function Groups() {
               <Input
                 placeholder="Enter group description"
                 className="bg-slate-800 border-slate-700 text-white"
-                defaultValue={editingGroup?.description}
               />
             </div>
           </div>
@@ -522,120 +501,21 @@ export function Groups() {
           <DialogFooter>
             <Button
               variant="secondary"
-              onClick={() => {
-                setIsAddOpen(false);
-                setEditingGroup(null);
-              }}
+              onClick={() => setIsAddOpen(false)}
               className="bg-slate-700 text-white hover:bg-slate-600"
             >
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                setIsAddOpen(false);
-                setEditingGroup(null);
-              }}
+              onClick={() => setIsAddOpen(false)}
               className="bg-white text-slate-800 hover:bg-slate-100"
             >
-              {editingGroup ? 'Update Group' : 'Add Group'}
+              Add Group
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* View Group Details Dialog */}
-      <Dialog open={!!viewingGroup} onOpenChange={(open) => {
-        if (!open) setViewingGroup(null);
-      }}>
-        <DialogContent className="max-w-3xl bg-slate-900 border-slate-800">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-white text-xl">{viewingGroup?.name}</DialogTitle>
-                <DialogDescription className="text-slate-400">
-                  {viewingGroup?.description}
-                </DialogDescription>
-              </div>
-              <Badge className={cn(
-                viewingGroup?.type === 'user' ? 'bg-blue-600' : 'bg-green-600',
-                'text-white'
-              )}>
-                <span className="flex items-center gap-1">
-                  {viewingGroup && getTypeIcon(viewingGroup.type)}
-                  {viewingGroup && getTypeLabel(viewingGroup.type)}
-                </span>
-              </Badge>
-            </div>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {/* Members Section */}
-            <Card className="bg-slate-950 border-slate-800">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-base flex items-center gap-2">
-                    {viewingGroup?.type === 'user' ? <Users className="size-4" /> : <Monitor className="size-4" />}
-                    Members ({viewingGroup?.memberCount})
-                  </CardTitle>
-                  <Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <UserPlus className="size-3 mr-1" />
-                    Add
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {viewingGroup?.members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-white text-sm">{member.name}</span>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400">
-                        <X className="size-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Assigned Rules Section */}
-            <Card className="bg-slate-950 border-slate-800">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Shield className="size-4" />
-                    Assigned Rules
-                  </CardTitle>
-                  <Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <Plus className="size-3 mr-1" />
-                    Assign
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {viewingGroup?.assignedRules.map((rule) => (
-                    <div key={rule} className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-white text-sm">{rule}</span>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400">
-                        <X className="size-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={() => setViewingGroup(null)}
-              className="bg-white text-slate-800 hover:bg-slate-100"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

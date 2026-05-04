@@ -1,8 +1,6 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { StatBar } from '../components/StatBar';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -10,13 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import {
-  UserCheck,
-  UserX,
-  AlertCircle,
-  Camera,
-  RotateCcw,
-} from 'lucide-react';
+import { AlertCircle, Camera } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalStorage } from '../lib/use-local-storage';
 import { employees as defaultEmployees, devices as defaultDevices } from '../data/staticData';
@@ -63,21 +55,11 @@ export function RealTimeEvents() {
       status: emp.validity === 'valid' ? 'granted' as const : 'denied' as const,
       confidence: emp.validity === 'valid' ? 0.88 + Math.random() * 0.11 : 0.15 + Math.random() * 0.35,
       timestamp: new Date(Date.now() - (10 - i) * 60000),
-      facePhotoUrl: emp.image,
+      facePhotoUrl: emp.image || `https://i.pravatar.cc/150?u=${emp.id}`,
       reason: emp.validity !== 'valid' ? `${emp.validity} validity` : undefined,
     }));
     setAccessEvents(seedEvents);
   }, [events.length, employees, deviceList, setAccessEvents]);
-
-  const deviceSummary = useMemo(
-    () => ({
-      total: deviceList.length,
-      online: deviceList.filter(d => d.status === 'online').length,
-      warning: deviceList.filter(d => d.status === 'warning' || d.status === 'maintenance').length,
-      offline: deviceList.filter(d => d.status === 'offline').length,
-    }),
-    [deviceList],
-  );
 
   // Simulate live updates from actual employee/device data
   useEffect(() => {
@@ -98,7 +80,7 @@ export function RealTimeEvents() {
         status,
         confidence: status === 'granted' ? 0.85 + Math.random() * 0.14 : 0.15 + Math.random() * 0.35,
         timestamp: new Date(),
-        facePhotoUrl: emp.image,
+        facePhotoUrl: emp.image || `https://i.pravatar.cc/150?u=${emp.id}`,
       };
 
       setAccessEvents((prev) => [newEvent, ...prev.slice(0, 199)]);
@@ -106,12 +88,6 @@ export function RealTimeEvents() {
 
     return () => clearInterval(interval);
   }, [employees, deviceList, setAccessEvents]);
-
-  const stats = useMemo(() => ({
-    totalToday: events.length,
-    granted: events.filter(e => e.status === 'granted').length,
-    denied: events.filter(e => e.status === 'denied').length,
-  }), [events]);
 
   const timeFormatter = useMemo(() => {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;
@@ -138,38 +114,8 @@ export function RealTimeEvents() {
     [events, selectedEventId],
   );
 
-  const [selectedDateTime, setSelectedDateTime] = useState<string>('');
-  const [jumpTime, setJumpTime] = useState<string>('');
-  const todayIso = useMemo(() => {
-    const d = new Date();
-    // YYYY-MM-DD
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }, []);
-  const selectedDateValue = selectedDateTime || todayIso;
-
   const timelineScrollRef = useRef<HTMLDivElement | null>(null);
   const timelineItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const findClosestEventByLocalTime = (timeStr: string) => {
-    // "HH:MM" or "HH:MM:SS"
-    const match = timeStr.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
-    if (!match) return null;
-    const h = Number(match[1]);
-    const m = Number(match[2]);
-    const s = Number(match[3] ?? '0');
-    const target = h * 3600 + m * 60 + s;
-
-    let best: { id: string; diff: number } | null = null;
-    for (const e of events) {
-      const t = e.timestamp;
-      const seconds = t.getHours() * 3600 + t.getMinutes() * 60 + t.getSeconds();
-      const diff = Math.abs(seconds - target);
-      if (!best || diff < best.diff) {
-        best = { id: e.id, diff };
-      }
-    }
-    return best?.id ?? null;
-  };
 
   const scrollToEvent = (eventId: string) => {
     const el = timelineItemRefs.current[eventId];
@@ -178,97 +124,14 @@ export function RealTimeEvents() {
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col gap-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-white mb-0.5 text-xl font-bold">Real-Time Events</h1>
-          <p className="text-slate-400 text-sm">
-            Real-time access monitoring across all locations
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Badge className="bg-slate-800 text-slate-100 hover:bg-slate-800">
-            Today: {todayIso}
-          </Badge>
-          <Input
-            type="date"
-            value={selectedDateValue}
-            onChange={(e) => setSelectedDateTime(e.target.value)}
-            className="picker-dark w-[190px] bg-slate-800 border-slate-600 text-slate-100 shadow-inner"
-          />
-        </div>
-      </div>
-
-      <StatBar items={[
-        { label: 'Total', value: stats.totalToday },
-        { label: 'Granted', value: stats.granted, color: 'green' },
-        { label: 'Denied', value: stats.denied, color: 'red' },
-        { label: 'Devices', value: `${deviceSummary.online}/${deviceSummary.total} online`, color: 'blue' },
-      ]} />
-
-      <div className="grid grid-cols-1 gap-4 flex-1 min-h-0">
-        {/* Live Access Events + Face Snapshot (paired rows) */}
-        <Card className="bg-slate-900 border-slate-800 flex flex-col min-h-0">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white">Access Events Timeline</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Click an event to view image and details
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="size-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-green-500">Live</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0">
-            <div className="h-full min-h-0 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-slate-500 text-sm">
-                  Showing <span className="text-slate-300">{events.length}</span> events
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden sm:block text-slate-500 text-sm">
-                    Hover + mouse wheel to scroll
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-slate-400 text-sm">Jump to</div>
-                    <Input
-                      type="time"
-                      step={1}
-                      value={jumpTime}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setJumpTime(v);
-                        const id = findClosestEventByLocalTime(v);
-                        if (!id) return;
-                        setSelectedEventId(id);
-                        scrollToEvent(id);
-                      }}
-                      className="picker-dark w-[160px] bg-slate-800 border-slate-600 text-slate-100 tabular-nums shadow-inner"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setJumpTime('');
-                        if (timelineScrollRef.current) {
-                          timelineScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-                        }
-                      }}
-                      className="inline-flex items-center justify-center size-9 rounded-md border border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700"
-                      aria-label="Reset time"
-                      title="Reset time"
-                    >
-                      <RotateCcw className="size-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Horizontal timeline */}
+    <div className="h-full overflow-hidden flex flex-col">
+      <Card className="bg-slate-900 border-slate-800 flex flex-col min-h-0 h-full">
+        <CardHeader className="py-2 px-4 shrink-0">
+          <CardTitle className="text-white text-base">Access Events Timeline</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 min-h-0 p-4 pt-0">
+          <div className="h-full min-h-0 flex flex-col gap-2">
+            {/* Horizontal timeline */}
               <div className="relative flex-1 min-h-0">
                 <div className="absolute left-0 right-0 top-4 h-px bg-slate-800" />
 
@@ -317,7 +180,7 @@ export function RealTimeEvents() {
                               setDetailsOpen(true);
                             }}
                             className={cn(
-                              'flex-1 min-h-[308px] rounded-2xl border overflow-hidden bg-slate-950 cursor-pointer',
+                              'flex-1 min-h-0 rounded-2xl border overflow-hidden bg-slate-950 cursor-pointer',
                               isSelected ? 'border-blue-600/50 ring-1 ring-blue-600/20' : 'border-slate-800',
                             )}
                           >
@@ -349,7 +212,6 @@ export function RealTimeEvents() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Details popup */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>

@@ -5,7 +5,10 @@ export interface Employee {
   employeeNo: string;
   branch: string;
   image?: string;
+  role: 'employee' | 'visitor' | 'contractor';
   validity: 'valid' | 'expired' | 'suspended';
+  validFrom?: string;
+  validUntil?: string;
   lastAuthTime?: string;
   registeredAt: string;
   authMethod?: 'face' | 'fingerprint' | 'passcode';
