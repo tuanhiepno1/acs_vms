@@ -29,7 +29,13 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import {
-  Search, Edit, Trash2, Plus, Camera, Building2, DoorOpen, LogIn, LogOut, ArrowLeftRight, Lock, Unlock, FolderOpen,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../components/ui/tabs';
+import {
+  Search, Edit, Trash2, Plus, Camera, Building2, DoorOpen, LogIn, LogOut, ArrowLeftRight, Lock, Unlock, FolderOpen, Zap,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalStorage } from '../lib/use-local-storage';
@@ -45,6 +51,7 @@ interface Group {
 import { formatTimeAgo } from '../lib/date';
 
 export function Devices() {
+  const [activeTab, setActiveTab] = useState('devices');
   const [devices, setDevices] = useLocalStorage<Device[]>('acs_devices', staticDevices);
   const [branchList] = useLocalStorage('acs_branches', defaultBranches);
   const [groups] = useLocalStorage<Group[]>('acs_groups', []);
@@ -118,8 +125,14 @@ export function Devices() {
         { label: 'Maintenance', value: stats.maintenance, color: 'orange' },
       ]} />
 
-      {/* Main Table */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
+        <TabsList className="bg-slate-800 border border-slate-700 w-fit">
+          <TabsTrigger value="devices" className="data-[state=active]:bg-slate-700 text-slate-300">Device List</TabsTrigger>
+          <TabsTrigger value="emergency" className="data-[state=active]:bg-slate-700 text-slate-300">Emergency Control</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="devices" className="flex-1 min-h-0 mt-3">
       <Card className="bg-slate-900 border-slate-800">
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -252,10 +265,10 @@ export function Devices() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-400 hover:bg-slate-800" onClick={() => openEdit(device)}>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(device)} className="text-slate-400 hover:text-blue-400">
                           <Edit className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-400 hover:bg-slate-800" onClick={() => setDeleteDevice(device)}>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(device)} className="text-slate-400 hover:text-red-400">
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
@@ -268,7 +281,31 @@ export function Devices() {
           )}
         </CardContent>
       </Card>
-      </div>
+        </TabsContent>
+
+        {/* Emergency Control Tab */}
+        <TabsContent value="emergency" className="flex-1 min-h-0 mt-3">
+          <Card className="bg-slate-900 border-slate-800 h-full flex flex-col items-center justify-center">
+            <CardContent className="flex flex-col items-center gap-4 py-12">
+              <Zap className="size-12 text-slate-500" />
+              <div className="text-center">
+                <h3 className="text-white text-lg font-medium">Emergency Control</h3>
+                <p className="text-slate-400 text-sm mt-1">Emergency door control and lockdown management</p>
+              </div>
+              <div className="flex gap-4">
+                <Button className="gap-2 bg-red-600 text-white hover:bg-red-700">
+                  <Lock className="size-4" />
+                  Emergency Lockdown
+                </Button>
+                <Button className="gap-2 bg-green-600 text-white hover:bg-green-700">
+                  <Unlock className="size-4" />
+                  Emergency Unlock
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -309,7 +346,7 @@ export function Devices() {
               </div>
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleAdd} className="bg-white text-slate-800 hover:bg-slate-100">Add Device</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setIsAddDialogOpen(false)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleAdd} className="bg-white text-slate-800 hover:bg-slate-100">Add Device</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -340,7 +377,7 @@ export function Devices() {
               </div>
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setEditDevice(null)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setEditDevice(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -348,7 +385,7 @@ export function Devices() {
       <Dialog open={!!deleteDevice} onOpenChange={open => { if (!open) setDeleteDevice(null); }}>
         <DialogContent className="bg-slate-900 border-slate-800">
           <DialogHeader><DialogTitle className="text-white">Delete Device</DialogTitle><DialogDescription className="text-slate-400">Are you sure you want to delete <span className="text-white font-medium">{deleteDevice?.name}</span>? This action cannot be undone.</DialogDescription></DialogHeader>
-          <DialogFooter><Button variant="outline" onClick={() => setDeleteDevice(null)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setDeleteDevice(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

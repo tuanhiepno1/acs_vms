@@ -356,7 +356,7 @@ export function Rules() {
                           variant="ghost"
                           size="sm"
                           onClick={() => openEdit(rule)}
-                          className="text-slate-400 hover:text-white"
+                          className="text-slate-400 hover:text-blue-400"
                         >
                           <Edit className="size-4" />
                         </Button>
@@ -527,13 +527,13 @@ export function Rules() {
 
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 setIsAddOpen(false);
                 setEditingRule(null);
                 resetForm();
               }}
-              className="border-slate-700 text-slate-200"
+              className="bg-slate-700 text-white hover:bg-slate-600"
             >
               Cancel
             </Button>
@@ -558,7 +558,7 @@ export function Rules() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button>
           </DialogFooter>
         </DialogContent>

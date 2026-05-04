@@ -41,10 +41,10 @@ export function Settings() {
       <div className="flex-1 min-h-0 overflow-y-auto">
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList className="bg-slate-900 border border-slate-800">
-          <TabsTrigger value="general" className="data-[state=active]:bg-slate-800 data-[state=active]:text-white">General</TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-slate-800 data-[state=active]:text-white">Notifications</TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-slate-800 data-[state=active]:text-white">Security</TabsTrigger>
-          <TabsTrigger value="system" className="data-[state=active]:bg-slate-800 data-[state=active]:text-white">System</TabsTrigger>
+          <TabsTrigger value="general" className="text-slate-300 data-[state=active]:bg-slate-800 data-[state=active]:text-white">General</TabsTrigger>
+          <TabsTrigger value="notifications" className="text-slate-300 data-[state=active]:bg-slate-800 data-[state=active]:text-white">Notifications</TabsTrigger>
+          <TabsTrigger value="security" className="text-slate-300 data-[state=active]:bg-slate-800 data-[state=active]:text-white">Security</TabsTrigger>
+          <TabsTrigger value="system" className="text-slate-300 data-[state=active]:bg-slate-800 data-[state=active]:text-white">System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -306,11 +306,11 @@ export function Settings() {
               <div className="space-y-3">
                 <Label className="text-slate-200">System Actions</Label>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2 border-slate-700 text-slate-200">
+                  <Button variant="secondary" className="gap-2 bg-slate-700 text-white hover:bg-slate-600">
                     <Database className="size-4" />
                     Backup Now
                   </Button>
-                  <Button variant="outline" className="gap-2 border-slate-700 text-slate-200">
+                  <Button variant="secondary" className="gap-2 bg-slate-700 text-white hover:bg-slate-600">
                     <Clock className="size-4" />
                     Restore
                   </Button>

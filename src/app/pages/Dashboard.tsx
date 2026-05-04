@@ -24,9 +24,24 @@ import {
   Clock,
   MapPin,
   Zap,
+  Unlock,
+  UserPlus,
+  Bell,
+  Radio,
+  Eye,
+  X,
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { branches as staticBranches, users as staticUsers, dashboardStats, devices as staticDevices } from '../data/staticData';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../components/ui/dialog';
 
 const accessData = [
   { name: 'Mon', granted: 240, denied: 15 },
@@ -76,6 +91,11 @@ const alerts = [
 ];
 
 export function Dashboard() {
+  const navigate = useNavigate();
+  
+  // Drill-down dialog state
+  const [chartDetail, setChartDetail] = useState<{type: string, open: boolean}>({type: '', open: false});
+
   const exportToCSV = () => {
     const headers = ['Date,Granted,Denied,Total,Active Users'];
     const rows = [
@@ -129,10 +149,6 @@ export function Dashboard() {
               <SelectItem value="year" className="text-white">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" className="gap-2 bg-white text-slate-800 hover:bg-slate-100 border-0">
-            <Calendar className="size-4" />
-            Custom
-          </Button>
           <Button onClick={exportToCSV} className="gap-2 bg-white text-slate-800 hover:bg-slate-100">
             <Download className="size-4" />
             Export
@@ -192,10 +208,16 @@ export function Dashboard() {
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Main Chart */}
-          <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">Daily Access Trends</CardTitle>
-              <CardDescription className="text-slate-400">Last 7 days statistics</CardDescription>
+          <Card 
+            className="lg:col-span-2 bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
+            onClick={() => setChartDetail({type: 'access', open: true})}
+          >
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Daily Access Trends</CardTitle>
+                <CardDescription className="text-slate-400">Last 7 days statistics</CardDescription>
+              </div>
+              <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
@@ -265,9 +287,18 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent Activity */}
           <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">Recent Activity</CardTitle>
-              <CardDescription className="text-slate-400">Latest access events</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-white">Recent Activity</CardTitle>
+                  {/* LIVE Badge */}
+                  <Badge className="bg-red-600/20 text-red-400 border-red-600/30 animate-pulse">
+                    <Radio className="size-3 mr-1" />
+                    LIVE
+                  </Badge>
+                </div>
+                <CardDescription className="text-slate-400">Latest access events</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -328,10 +359,16 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Distribution by Office */}
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">Distribution by Office</CardTitle>
-              <CardDescription className="text-slate-400">Access count by location</CardDescription>
+          <Card 
+            className="bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
+            onClick={() => setChartDetail({type: 'distribution', open: true})}
+          >
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Distribution by Office</CardTitle>
+                <CardDescription className="text-slate-400">Access count by location</CardDescription>
+              </div>
+              <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -360,10 +397,16 @@ export function Dashboard() {
           </Card>
 
           {/* Peak Hours */}
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-white">Peak Hours</CardTitle>
-              <CardDescription className="text-slate-400">Access volume by hour</CardDescription>
+          <Card 
+            className="bg-slate-900 border-slate-800 cursor-pointer hover:border-slate-600 transition-colors group"
+            onClick={() => setChartDetail({type: 'peak', open: true})}
+          >
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Peak Hours</CardTitle>
+                <CardDescription className="text-slate-400">Access volume by hour</CardDescription>
+              </div>
+              <Eye className="size-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -411,6 +454,120 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chart Detail Dialog */}
+      <Dialog open={chartDetail.open} onOpenChange={(open) => setChartDetail({...chartDetail, open})}>
+        <DialogContent className="bg-slate-900 border-slate-800 max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {chartDetail.type === 'access' && 'Daily Access Trends - Detailed View'}
+              {chartDetail.type === 'distribution' && 'Distribution by Office - Detailed View'}
+              {chartDetail.type === 'peak' && 'Peak Hours - Detailed View'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {chartDetail.type === 'access' && 'Complete access statistics with hourly breakdown'}
+              {chartDetail.type === 'distribution' && 'Detailed breakdown by office location'}
+              {chartDetail.type === 'peak' && 'Hourly access volume analysis'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {chartDetail.type === 'access' && (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={accessData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" stroke="#94a3b8" />
+                    <YAxis stroke="#94a3b8" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                      labelStyle={{ color: '#f1f5f9' }}
+                      itemStyle={{ color: '#cbd5e1' }}
+                    />
+                    <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                    <Bar dataKey="granted" fill="#10b981" name="Granted" />
+                    <Bar dataKey="denied" fill="#ef4444" name="Denied" />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-lg bg-slate-800">
+                    <p className="text-slate-400 text-sm">Total Granted</p>
+                    <p className="text-green-400 text-xl font-bold">{accessData.reduce((a, b) => a + b.granted, 0).toLocaleString()}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800">
+                    <p className="text-slate-400 text-sm">Total Denied</p>
+                    <p className="text-red-400 text-xl font-bold">{accessData.reduce((a, b) => a + b.denied, 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {chartDetail.type === 'distribution' && (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={branchData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {branchData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                      itemStyle={{ color: '#cbd5e1' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-2">
+                  {branchData.map((branch, i) => (
+                    <div key={branch.name} className="flex items-center justify-between p-2 rounded-lg bg-slate-800">
+                      <div className="flex items-center gap-2">
+                        <div className="size-3 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}} />
+                        <span className="text-slate-300 text-sm">{branch.name}</span>
+                      </div>
+                      <span className="text-white font-medium">{branch.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {chartDetail.type === 'peak' && (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={peakHoursData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="hour" stroke="#94a3b8" />
+                    <YAxis stroke="#94a3b8" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                      labelStyle={{ color: '#f1f5f9' }}
+                      itemStyle={{ color: '#cbd5e1' }}
+                    />
+                    <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                    <Line type="monotone" dataKey="count" stroke="#3b82f6" name="Access Count" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-lg bg-slate-800">
+                    <p className="text-slate-400 text-sm">Peak Hour</p>
+                    <p className="text-blue-400 text-xl font-bold">8 AM</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800">
+                    <p className="text-slate-400 text-sm">Total Access</p>
+                    <p className="text-white text-xl font-bold">{peakHoursData.reduce((a, b) => a + b.count, 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

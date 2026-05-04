@@ -198,7 +198,7 @@ export function Branches() {
             <div className="grid gap-2"><Label className="text-slate-200">Email</Label><Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} type="email" placeholder="office@company.com" className="bg-slate-800 border-slate-700 text-white" /></div>
             <div className="grid gap-2"><Label className="text-slate-200">Manager</Label><Input value={form.manager} onChange={e => setForm({...form, manager: e.target.value})} placeholder="John Doe" className="bg-slate-800 border-slate-700 text-white" /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleAdd} className="bg-white text-slate-800 hover:bg-slate-100">Add Office</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setIsAddDialogOpen(false)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleAdd} className="bg-white text-slate-800 hover:bg-slate-100">Add Office</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -213,7 +213,7 @@ export function Branches() {
             <div className="grid gap-2"><Label className="text-slate-200">Email</Label><Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div className="grid gap-2"><Label className="text-slate-200">Manager</Label><Input value={form.manager} onChange={e => setForm({...form, manager: e.target.value})} className="bg-slate-800 border-slate-700 text-white" /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setEditBranch(null)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setEditBranch(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -221,7 +221,7 @@ export function Branches() {
       <Dialog open={!!deleteBranch} onOpenChange={open => { if (!open) setDeleteBranch(null); }}>
         <DialogContent className="bg-slate-900 border-slate-800">
           <DialogHeader><DialogTitle className="text-white">Delete Office</DialogTitle><DialogDescription className="text-slate-400">Are you sure you want to delete <span className="text-white font-medium">{deleteBranch?.name}</span>? This action cannot be undone.</DialogDescription></DialogHeader>
-          <DialogFooter><Button variant="outline" onClick={() => setDeleteBranch(null)} className="border-slate-700 text-slate-200">Cancel</Button><Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button></DialogFooter>
+          <DialogFooter><Button variant="secondary" onClick={() => setDeleteBranch(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button><Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -467,7 +467,7 @@ export default function ModuleHub() {
             <Button
               variant="outline"
               onClick={() => setAddOpen(false)}
-              className="border-slate-700 text-slate-200"
+              className="border-slate-600 text-white hover:bg-slate-800"
             >
               Cancel
             </Button>
@@ -499,7 +499,7 @@ export default function ModuleHub() {
             <Button
               variant="outline"
               onClick={() => setDeleteTarget(null)}
-              className="border-slate-700 text-slate-200"
+              className="border-slate-600 text-white hover:bg-slate-800"
             >
               Cancel
             </Button>
@@ -561,13 +561,13 @@ export default function ModuleHub() {
 
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 setChangePasswordOpen(false);
                 setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 setPasswordError('');
               }}
-              className="border-slate-700 text-slate-200"
+              className="bg-slate-700 text-white hover:bg-slate-600"
             >
               Cancel
             </Button>

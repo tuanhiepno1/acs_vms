@@ -336,10 +336,10 @@ export function Schedules() {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-400 hover:bg-slate-800" onClick={() => openEdit(schedule)}>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(schedule)} className="text-slate-400 hover:text-blue-400">
                             <Edit className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-400 hover:bg-slate-800" onClick={() => setDeleteTarget(schedule)}>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(schedule)} className="text-slate-400 hover:text-red-400">
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
@@ -450,7 +450,7 @@ export function Schedules() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingSchedule(null); resetForm(); }} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => { setIsAddOpen(false); setEditingSchedule(null); resetForm(); }} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={editingSchedule ? handleEdit : handleAdd} disabled={!form.name} className="bg-white text-slate-800 hover:bg-slate-100">
               {editingSchedule ? 'Save Changes' : 'Create Schedule'}
             </Button>
@@ -468,7 +468,7 @@ export function Schedules() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button>
           </DialogFooter>
         </DialogContent>

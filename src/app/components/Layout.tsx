@@ -3,24 +3,24 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Camera,
-  Building2,
-  BarChart3,
   Settings as SettingsIcon,
   Settings,
   Menu,
   X,
+  ChevronRight,
   ChevronDown,
-  ShieldCheck,
-  Shield,
   Clock,
-  ArrowLeft,
   LogOut,
   Users as UsersIcon,
   Scale,
-  FolderOpen,
-  CalendarClock,
+  Search,
+  Command,
+  Folder,
+  HardDrive,
+  DoorOpen,
+  Home,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -43,22 +43,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from './ui/command';
 import { useAuth } from '../contexts/AuthContext';
 
-const mainNav = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Real-Time Events', href: '/live-activity', icon: Clock },
+  { name: 'Real-Time Events', href: '/real-time-events', icon: Clock },
   { name: 'Users', href: '/users', icon: Users },
-  { name: 'Groups', href: '/groups', icon: FolderOpen },
+  { name: 'Groups', href: '/groups', icon: Folder },
   { name: 'Devices', href: '/devices', icon: Camera },
-  { name: 'Logs', href: '/logs', icon: FileText },
+  { name: 'Door Control', href: '/doors', icon: DoorOpen },
+  { name: 'Events', href: '/events', icon: Scale },
+  { name: 'Logs', href: '/logs', icon: HardDrive },
   { name: 'Occupancy', href: '/occupancy', icon: UsersIcon },
-  { name: 'Audit Log', href: '/audit-log', icon: Shield },
-  { name: 'Rules & Policies', href: '/rules', icon: Scale },
-  { name: 'Schedules', href: '/schedules', icon: CalendarClock },
-  { name: 'Offices', href: '/branches', icon: Building2 },
-  { name: 'Settings', href: '/settings', icon: SettingsIcon },
+  { name: 'System', href: '/system', icon: SettingsIcon },
 ];
+
+// For search
+const allNavItems = navItems;
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,6 +85,25 @@ export function Layout() {
   const navigate = useNavigate();
   const { user, logout, changePassword } = useAuth();
   const [now, setNow] = useState(() => new Date());
+  const [commandOpen, setCommandOpen] = useState(false);
+
+  // Cmd+K shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Get current page name for breadcrumb
+  const currentPage = useMemo(() => {
+    const item = allNavItems.find(i => i.href === location.pathname);
+    return item?.name || 'Page';
+  }, [location.pathname]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -127,28 +162,26 @@ export function Layout() {
               <X className="size-6 text-slate-400" />
             </button>
           </div>
-          <nav className="flex-1 mt-6 px-3 flex flex-col">
-            <div className="space-y-0.5">
-              {mainNav.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                      isActive
-                        ? "bg-blue-600/15 text-blue-400 font-medium"
-                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                    )}
-                  >
-                    <item.icon className="size-5" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          <nav className="flex-1 mt-4 px-3 flex flex-col overflow-y-auto">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-0.5',
+                    isActive
+                      ? 'bg-blue-600/15 text-blue-400 font-medium'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  <span className="text-sm">{item.name}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </div>
@@ -164,27 +197,25 @@ export function Layout() {
               <span className="text-white font-semibold tracking-tight">Tempus Core</span>
             </div>
           </div>
-          <nav className="flex-1 mt-6 px-3 flex flex-col">
-            <div className="space-y-0.5">
-              {mainNav.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                      isActive
-                        ? "bg-blue-600/15 text-blue-400 font-medium"
-                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                    )}
-                  >
-                    <item.icon className="size-5" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          <nav className="flex-1 mt-4 px-3 flex flex-col overflow-y-auto">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-0.5',
+                    isActive
+                      ? 'bg-blue-600/15 text-blue-400 font-medium'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  <span className="text-sm">{item.name}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </div>
@@ -199,6 +230,19 @@ export function Layout() {
           >
             <Menu className="size-6 text-slate-400" />
           </button>
+
+          {/* Breadcrumbs */}
+          <nav className="hidden md:flex items-center gap-2 text-sm">
+            <Link
+              to="/"
+              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+            >
+              <Home className="size-4" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+            <ChevronRight className="size-4 text-slate-600" />
+            <span className="text-white font-medium">{currentPage}</span>
+          </nav>
 
           <div className="flex-1" />
 
@@ -252,6 +296,30 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Search Command Dialog */}
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+        <CommandInput placeholder="Search pages..." className="text-white" />
+        <CommandList className="bg-slate-900">
+          <CommandEmpty className="text-slate-400">No results found.</CommandEmpty>
+          <CommandGroup heading="Menu" className="text-slate-400">
+            {navItems.map((item) => (
+              <CommandItem
+                key={item.name}
+                onSelect={() => {
+                  navigate(item.href);
+                  setCommandOpen(false);
+                }}
+                className="text-slate-300 data-[selected=true]:bg-slate-800"
+              >
+                <item.icon className="size-4 mr-2 text-slate-500" />
+                {item.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+          <CommandSeparator />
+        </CommandList>
+      </CommandDialog>
 
       {/* Change Password Dialog */}
       <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>

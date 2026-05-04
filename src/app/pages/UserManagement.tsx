@@ -346,10 +346,10 @@ export function UserManagement() {
                       <TableCell className="text-center text-slate-400 text-sm">{fmt(emp.registeredAt)}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-400 hover:bg-slate-800" onClick={() => openEdit(emp)}>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} className="text-slate-400 hover:text-blue-400">
                             <Edit className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-400 hover:bg-slate-800" onClick={() => setDeleteTarget(emp)}>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(emp)} className="text-slate-400 hover:text-red-400">
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
@@ -372,7 +372,7 @@ export function UserManagement() {
           </DialogHeader>
           {formFields}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => setIsAddOpen(false)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={handleAdd} disabled={!form.name || !form.employeeNo} className="bg-white text-slate-800 hover:bg-slate-100">Register</Button>
           </DialogFooter>
         </DialogContent>
@@ -387,7 +387,7 @@ export function UserManagement() {
           </DialogHeader>
           {formFields}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => setEditTarget(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={handleEdit} className="bg-white text-slate-800 hover:bg-slate-100">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
@@ -403,7 +403,7 @@ export function UserManagement() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="border-slate-700 text-slate-200">Cancel</Button>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)} className="bg-slate-700 text-white hover:bg-slate-600">Cancel</Button>
             <Button onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">Delete</Button>
           </DialogFooter>
         </DialogContent>

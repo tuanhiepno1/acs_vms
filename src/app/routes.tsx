@@ -8,17 +8,16 @@ import { LogManagement } from "./pages/LogManagement";
 import { Devices } from "./pages/Devices";
 import { Branches } from "./pages/Branches";
 import { Reports } from "./pages/Reports";
-import { Settings } from "./pages/Settings";
-import { AuditLog } from "./pages/AuditLog";
-import { LiveActivity } from "./pages/LiveActivity";
+import { RealTimeEvents } from "./pages/RealTimeEvents";
 import { Occupancy } from "./pages/Occupancy";
 import { Rules } from "./pages/Rules";
 import { Groups } from "./pages/Groups";
 import { Schedules } from "./pages/Schedules";
+import { Events } from "./pages/Events";
+import { System } from "./pages/System";
 import { NotFound } from "./pages/NotFound";
-import { ComingSoon } from "./pages/ComingSoon";
+import { DoorControl } from "./pages/DoorControl";
 import Login from "./pages/Login";
-import ModuleHub from "./pages/ModuleHub";
 
 export const router = createBrowserRouter([
   {
@@ -32,32 +31,47 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, Component: Dashboard },
+      { path: "real-time-events", Component: RealTimeEvents },
       { path: "users", Component: UserManagement },
+      // Group section
       { path: "groups", Component: Groups },
-      { path: "devices", Component: Devices },
-      { path: "logs", Component: LogManagement },
-      { path: "audit-log", Component: AuditLog },
-      { path: "live-activity", Component: LiveActivity },
-      { path: "occupancy", Component: Occupancy },
-      { path: "rules", Component: Rules },
+      { path: "groups/user", Component: Groups },
+      { path: "groups/device", Component: Groups },
+      { path: "groups/ta", Component: Groups },
+      { path: "groups/access", Component: Groups },
       { path: "schedules", Component: Schedules },
+      // Device section
+      { path: "devices", Component: Devices },
+      { path: "emergency-control", Component: Devices },
+      // Door section
+      { path: "doors", Component: DoorControl },
+      // Event section - consolidated into Events page with tabs
+      { path: "events", Component: Events },
+      { path: "events/rules", Component: Events },
+      { path: "events/actions", Component: Events },
+      { path: "events/action-logs", Component: Events },
+      // Log section
+      { path: "logs/device", Component: LogManagement },
+      { path: "logs/door", Component: LogManagement },
+      { path: "logs/emergency", Component: LogManagement },
+      { path: "logs/authentication", Component: LogManagement },
+      { path: "logs/ta", Component: LogManagement },
+      // Occupancy section
+      { path: "occupancy", Component: Occupancy },
+      // System section - consolidated into System page with tabs
+      { path: "system", Component: System },
+      { path: "audit-log", Component: System },
+      { path: "settings", Component: System },
+      { path: "accounts", Component: System },
+      { path: "remote-management", Component: System },
+      // Legacy routes (redirects)
+      { path: "logs", Component: LogManagement },
+      { path: "rules", Component: Rules },
       { path: "branches", Component: Branches },
       { path: "reports", Component: Reports },
-      { path: "settings", Component: Settings },
       { path: "*", Component: NotFound },
     ],
   },
-  // Temporarily disabled VMS and Hub Model
-  // {
-  //   path: "/hub",
-  //   element: <RequireAuth><ModuleHub /></RequireAuth>,
-  //   errorElement: <RouteErrorBoundary />,
-  // },
-  // {
-  //   path: "/vms",
-  //   element: <RequireAuth><ComingSoon /></RequireAuth>,
-  //   errorElement: <RouteErrorBoundary />,
-  // },
   {
     path: "*",
     element: <RequireAuth><NotFound /></RequireAuth>,
